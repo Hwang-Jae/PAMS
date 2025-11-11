@@ -205,7 +205,7 @@
                         <div class="bg-white p-6 rounded-xl shadow mb-8">
                             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b pb-3">
                                 <h3 class="text-xl font-semibold text-slate-800 mb-2 md:mb-0">사용 횟수(COUNT) 관리 대상</h3>
-                                <p class="text-sm text-slate-500">💡 버튼을 눌러 사용 횟수를 증가시킬 수 있습니다.</p>
+                                <p class="text-sm text-slate-500">💡 '1회 사용' 버튼을 누르면 횟수가 증가합니다.</p>
                             </div>
                             <div id="lifecycle-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                         </div>
@@ -354,27 +354,31 @@
     </div>
 
     <div id="label-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl w-full max-w-sm p-6">
-            <h3 class="text-2xl font-bold text-slate-800 mb-4 text-center">라벨 발행</h3>
-            
-            <div id="label-content" class="w-full border-2 border-dashed border-slate-400 p-4 bg-white text-center">
-                <img src="logo_NBTS.gif" alt="Logo" class="h-8 w-auto mx-auto mb-3">
-                <p id="label-cmf2-text" class="text-xl font-extrabold text-black break-words mb-3"></p>
-                <div id="label-qrcode" class="flex-shrink-0 p-1 border w-fit mx-auto"></div>
-                <p class="text-xs text-red-600 font-bold mt-4 pt-3 border-t border-slate-200">
-                    경고: 훼손되지 않도록 주의해주세요
-                </p>
-            </div>
-            <div id="label-modal-buttons" class="mt-6 flex flex-col md:flex-row gap-3">
-                <button type="button" id="print-label-btn" class="w-full px-5 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition">
-                    🖨️ 인쇄하기
-                </button>
-                <button type="button" id="close-label-modal" class="w-full px-5 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">
-                    닫기
-                </button>
+    <div class="bg-white rounded-xl w-full max-w-md p-6"> <h3 class="text-2xl font-bold text-slate-800 mb-4 text-center">라벨 발행</h3>
+        
+        <div id="label-content" class="w-full border-2 border-dashed border-slate-400 p-4 bg-white">
+            <div class="flex items-start space-x-4">
+                <div id="label-qrcode" class="flex-shrink-0 p-1 border"></div>
+                
+                <div class="flex flex-col w-full">
+                    <img src="logo_NBTS.gif" alt="Logo" class="h-8 w-auto mb-3">
+                    <p id="label-cmf2-text" class="text-xl font-bold text-black break-words leading-tight mb-3"></p>
+                    <p class="text-xs text-red-600 font-bold mt-2 pt-2 border-t border-slate-200">
+                        경고: 훼손되지 않도록 주의해주세요
+                    </p>
+                </div>
             </div>
         </div>
+        <div id="label-modal-buttons" class="mt-6 flex flex-col md:flex-row gap-3">
+            <button type="button" id="print-label-btn" class="w-full px-5 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition">
+                🖨️ 인쇄하기
+            </button>
+            <button type="button" id="close-label-modal" class="w-full px-5 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">
+                닫기
+            </button>
+        </div>
     </div>
+</div>
 
     <script type="module">
         // Supabase 설정
@@ -384,7 +388,7 @@
         let supabase;
         let html5QrCodeScanner; // 스캐너 객체
         let scannerTargetInput = null; // 스캔 값을 입력할 input
-        let qrCodeInstance = null; // 라벨 QR 코드 객체
+        let qrCodeInstance = null; // [NEW] 라벨 QR 코드 객체
 
         // 전역 상태 관리
         const state = { 
@@ -423,7 +427,7 @@
             } finally { showLoading(false); }
         }
 
-        // [MODIFIED] 이벤트 바인딩 (횟수 관리 버튼 수정)
+        // [MODIFIED] 이벤트 바인딩 (라벨 재발행 버튼 리스너 추가)
         function bindEvents() {
             const sidebar = $('#sidebar');
             const backdrop = $('#sidebar-backdrop');
@@ -472,14 +476,9 @@
                 }
             };
             
-            // [MODIFIED] '횟수 사용' 버튼 이벤트 위임 (data-qty 읽기)
             $('#lifecycle-list').addEventListener('click', async (e) => {
-                const button = e.target.closest('.use-btn'); // 버튼 또는 버튼 내부 클릭 감지
-                if (button) {
-                    const pCode = button.getAttribute('data-pcode');
-                    const sn = button.getAttribute('data-sn');
-                    const qty = parseInt(button.getAttribute('data-qty') || '1'); // qty 가져오기
-                    await handleUseAsset(pCode, sn, qty); // qty 전달
+                if (e.target.classList.contains('use-btn')) {
+                    await handleUseAsset(e.target.getAttribute('data-pcode'), e.target.getAttribute('data-sn'));
                 }
             });
             
@@ -503,7 +502,7 @@
                 window.print(); // 브라우저 인쇄 기능 호출
             };
 
-            // '라벨 재발행' 버튼 이벤트 위임 (자산 마스터)
+            // [NEW] '라벨 재발행' 버튼 이벤트 위임 (자산 마스터)
             $('#asset-list').addEventListener('click', (e) => {
                 const button = e.target.closest('.reissue-label-btn');
                 if (button) {
@@ -570,7 +569,7 @@
             $('#kpi-total-stock').innerText = state.stock.reduce((sum, i) => sum + i.qty, 0).toLocaleString();
             
             renderSafetyAlerts();       
-            renderAssets(); 
+            renderAssets(); // [MODIFIED] 이 함수가 재발행 버튼을 그립니다.
             renderHistory();            
             renderTypeBreakdown();      
             renderStockByWarehouse();   
@@ -679,7 +678,6 @@
             return { typeClass, typeName };
         }
 
-        // [MODIFIED] renderLifecycle (버튼 그룹 추가)
         function renderLifecycle() {
             const list = $('#lifecycle-list');
             const countItems = state.stock.filter(s => s.cmf_3 === 'COUNT');
@@ -696,8 +694,6 @@
                 let progressClass = '';
                 if (percent >= 100) progressClass = 'danger';
                 else if (percent >= 80) progressClass = 'warning';
-                
-                // [MODIFIED] 버튼 HTML 변경
                 return `
                 <div class="bg-white p-6 rounded-xl shadow border border-slate-200 flex flex-col justify-between">
                     <div>
@@ -717,48 +713,29 @@
                             <progress class="${progressClass} h-3" value="${percent}" max="100"></progress>
                         </div>
                     </div>
-                    <div class="flex justify-between space-x-2 mt-4">
-                        <button class="use-btn w-full py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition text-sm" 
-                                data-pcode="${item.product_code}" data-sn="${item.serial_number||''}" data-qty="1">
-                            + 1회
-                        </button>
-                        <button class="use-btn w-full py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition text-sm" 
-                                data-pcode="${item.product_code}" data-sn="${item.serial_number||''}" data-qty="10">
-                            + 10회
-                        </button>
-                        <button class="use-btn w-full py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition text-sm" 
-                                data-pcode="${item.product_code}" data-sn="${item.serial_number||''}" data-qty="100">
-                            + 100회
-                        </button>
-                    </div>
+                    <button class="use-btn w-full py-3 bg-indigo-50 text-indigo-700 font-bold rounded-lg hover:bg-indigo-100 transition flex justify-center items-center" 
+                            data-pcode="${item.product_code}" data-sn="${item.serial_number||''}">
+                        ⚡ 1회 사용 처리
+                    </button>
                 </div>`;
             }).join('');
         }
 
-        // [MODIFIED] handleUseAsset (qty 파라미터 추가)
-        async function handleUseAsset(pCode, sn, qty) {
+        async function handleUseAsset(pCode, sn) {
             if(!checkMgr()) return;
             const serialVal = sn === '' ? null : sn; 
-            // 확인 메시지를 동적으로 변경
-            if(!confirm(`[ ${pCode} ] 자산을 ${qty}회 사용 처리하시겠습니까?`)) return;
-
+            if(!confirm(`[ ${pCode} ] 자산을 1회 사용 처리하시겠습니까?`)) return;
             showLoading(true, '사용 처리 중...');
             try {
                 const { error } = await supabase.from('LOT_HIS').insert({
-                    tran_code: 'USE', 
-                    product_code: pCode,
-                    serial_number: serialVal, 
-                    qty: qty, // 1 대신 qty 변수 사용
+                    tran_code: 'USE', product_code: pCode,
+                    serial_number: serialVal, qty: 1,
                     create_user_id: state.managerId
                 });
                 if(error) throw error;
                 alertMsg('사용 처리가 완료되었습니다.');
-            } catch(e) { 
-                alertMsg('처리 실패: ' + e.message, true); 
-            } 
-            finally { 
-                showLoading(false); 
-            }
+            } catch(e) { alertMsg('처리 실패: ' + e.message, true); } 
+            finally { showLoading(false); }
         }
 
         function updateConsumptionDropdowns() {
@@ -829,10 +806,10 @@
         }
         
         // =========================================
-        // 라벨/스캐너 로직 (통합됨)
+        // [NEW] 라벨/스캐너 로직 (통합됨)
         // =========================================
 
-        /** 라벨 발행 모달 표시 및 QR 코드 생성 */
+        /** [NEW] 라벨 발행 모달 표시 및 QR 코드 생성 */
         function showLabelModal(cmf2_code) {
             if (!cmf2_code) return;
 
@@ -932,7 +909,7 @@
         }
 
         // =========================================
-        // 폼 저장 로직 (라벨 발행 연동)
+        // [MODIFIED] 폼 저장 로직 (라벨 발행 연동)
         // =========================================
         async function saveAsset(e) {
             e.preventDefault(); if(!checkMgr()) return;
@@ -944,7 +921,7 @@
             const dateCode = pDate.getFullYear().toString().slice(-2) + MONTH_MAP[pDate.getMonth()];
             const prefix = `${fd.get('cmf_1')}-${typeCode}-${deptCode}-${dateCode}`;
             
-            let cmf_2 = ''; 
+            let cmf_2 = ''; // [MODIFIED] 변수 외부 선언
 
             showLoading(true, '자산 등록 중...');
             try {
@@ -952,7 +929,7 @@
                 let maxSeq = 0;
                 (existing||[]).forEach(r => { try { maxSeq = Math.max(maxSeq, parseInt(r.cmf_2.split('-').pop())); } catch {} });
                 
-                cmf_2 = `${prefix}-${String(maxSeq+1).padStart(4,'0')}`; 
+                cmf_2 = `${prefix}-${String(maxSeq+1).padStart(4,'0')}`; // [MODIFIED] 값 할당
                 
                 const lifeType = fd.get('cmf_3');
                 const lifeVal = (lifeType === 'NONE') ? null : fd.get('cmf_4');
@@ -983,6 +960,7 @@
                 
                 alertMsg('자산 등록이 완료되었습니다.'); 
 
+                // [NEW] 저장이 성공하면 라벨 발행 모달 호출
                 showLabelModal(cmf_2);
                 
                 $('#asset-modal').classList.add('hidden'); 
