@@ -10,7 +10,6 @@
         window.supabaseCreateClient = createClient;
     </script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         :host, body, html { font-family: 'Inter', sans-serif; }
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
@@ -23,12 +22,6 @@
         progress::-webkit-progress-value { @apply bg-indigo-600 transition-all duration-500; }
         progress.warning::-webkit-progress-value { @apply bg-yellow-500; }
         progress.danger::-webkit-progress-value { @apply bg-red-500; }
-        
-        /* [NEW] 스캐너 아이콘 SVG 스타일 */
-        .scan-icon {
-            width: 1.5rem; /* 24px */
-            height: 1.5rem; /* 24px */
-        }
     </style>
 </head>
 <body class="bg-slate-100">
@@ -41,7 +34,7 @@
             </div>
         </div>
 
-        <div class="flex min-h-screen bg-slate-100">
+        <div class="flex h-screen bg-slate-100">
             
             <nav id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-800 text-white flex flex-col shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
                 <div class="px-6 py-5 border-b border-slate-700">
@@ -224,18 +217,7 @@
                         </div>
 
                         <div class="col-span-1 md:col-span-2"><label class="block text-sm font-medium text-slate-700">자산명 (product_name) *</label><input type="text" name="product_name" required placeholder="예: 전동 드라이버 A-Type"></div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">자산 코드 (product_code) *</label>
-                            <div class="flex space-x-2 mt-1">
-                                <input type="text" name="product_code" required class="!mt-0" placeholder="직접 입력 또는 스캔">
-                                <button type="button" id="open-scanner-btn-product" class="flex-shrink-0 p-3 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition">
-                                    <svg class="scan-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m-8-8h16"></path></svg>
-                                    <span class="sr-only">자산 코드 스캔</span>
-                                </button>
-                            </div>
-                        </div>
-                        
+                        <div><label class="block text-sm font-medium text-slate-700">자산 코드 (product_code) *</label><input type="text" name="product_code" required placeholder="예: TOL-DRV-001"></div>
                         <div><label class="block text-sm font-medium text-slate-700">구매일 *</label><input type="date" name="purchase_date" required></div>
                         
                         <div><label class="block text-sm font-medium text-slate-700">자산 대분류 (cmf_1) *</label>
@@ -265,6 +247,25 @@
                             <select name="dept" required>
                                 <option value="">선택...</option>
                                 <option value="ICT 기획팀">ICT 기획팀 (ICT)</option>
+                                <option value="회계팀">회계팀 (ACC)</option>
+                                <option value="재무팀">재무팀 (FIN)</option>
+                                <option value="인사노무팀">인사노무팀 (HR)</option>
+                                <option value="총무팀">총무팀 (GA)</option>
+                                <option value="안전환경실">안전환경실 (SAF)</option>
+                                <option value="ESG TFT">ESG TFT (ESG)</option>
+                                <option value="선행품질시험팀">선행품질시험팀 (AQT)</option>
+                                <option value="신차품질팀">신차품질팀 (NQ)</option>
+                                <option value="품질경영팀">품질경영팀 (QM)</option>
+                                <option value="전동화품질팀">전동화품질팀 (EQ)</option>
+                                <option value="구매팀">구매팀 (PUR)</option>
+                                <option value="개발팀">개발팀 (DEV)</option>
+                                <option value="생산기술팀">생산기술팀 (PT)</option>
+                                <option value="기술개발센터">기술개발센터 (TDC)</option>
+                                <option value="전동화설계팀">전동화설계팀 (ED)</option>
+                                <option value="영업구매1팀">영업구매1팀 (BP1)</option>
+                                <option value="영업구매2팀">영업구매2팀 (BP2)</option>
+                                <option value="생산관리팀">생산관리팀 (PM)</option>
+                                <option value="생산팀">생산팀 (PRO)</option>
                                 <option value="공정기술팀">공정기술팀 (OT)</option>
                             </select>
                         </div>
@@ -286,18 +287,7 @@
                         </div>
 
                         <div><label class="block text-sm font-medium text-slate-700 bg-gray-50 p-1 rounded">내부 관리 코드 (자동생성)</label><input type="text" name="cmf_2" readonly class="bg-gray-100 text-slate-500 cursor-not-allowed" placeholder="저장 시 자동 생성됨"></div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">시리얼 번호 (선택)</label>
-                             <div class="flex space-x-2 mt-1">
-                                <input type="text" name="serial_number" class="!mt-0" placeholder="직접 입력 또는 스캔">
-                                <button type="button" id="open-scanner-btn-serial" class="flex-shrink-0 p-3 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition">
-                                    <svg class="scan-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m-8-8h16"></path></svg>
-                                    <span class="sr-only">시리얼 번호 스캔</span>
-                                </button>
-                            </div>
-                        </div>
-
+                        <div><label class="block text-sm font-medium text-slate-700">시리얼 번호 (선택)</label><input type="text" name="serial_number" placeholder="없을 경우 비워두세요"></div>
                         <div><label class="block text-sm font-medium text-slate-700">실사용자 (선택)</label><input type="text" name="user" placeholder="예: 홍길동"></div>
                         <div><label class="block text-sm font-medium text-slate-700">초기 수량 (qty) *</label><input type="number" name="qty" min="0" value="1" required></div>
                         <div><label class="block text-sm font-medium text-slate-700">안전 재고 (safe_qty)</label><input type="number" name="safe_qty" min="0" value="0"></div>
@@ -320,16 +310,6 @@
             </div>
         </div>
     </div>
-    
-    <div id="scanner-modal" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-xl w-full max-w-md p-4">
-            <h3 class="text-lg font-bold text-center mb-4">QR/바코드를 스캔하세요</h3>
-            <div id="qr-reader" class="w-full rounded-lg overflow-hidden border"></div>
-            <button type="button" id="close-scanner-btn" class="mt-4 w-full px-5 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">
-                취소
-            </button>
-        </div>
-    </div>
 
     <script type="module">
         // Supabase 설정
@@ -337,8 +317,6 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0Y29vdnZnaHR0bnd4d2R0dHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMDE3NzYsImV4cCI6MjA3Njg3Nzc3Nn0.Fmn9b1FoyklF5jw0oiLKp4JT1zRTY9iq9hiCog6HHpE';
         const createClient = window.supabaseCreateClient;
         let supabase;
-        let html5QrCodeScanner; // 스캐너 객체
-        let scannerTargetInput = null; // [NEW] 스캔한 값을 입력할 input 요소를 저장하는 변수
 
         // 전역 상태 관리
         const state = { 
@@ -377,41 +355,52 @@
             } finally { showLoading(false); }
         }
 
-        // [MODIFIED] 이벤트 바인딩 (스캐너 버튼 2개 추가)
+        // [MODIFIED] 이벤트 바인딩 (모바일 메뉴 로직 추가)
         function bindEvents() {
             const sidebar = $('#sidebar');
             const backdrop = $('#sidebar-backdrop');
             const navButtons = document.querySelectorAll('#sidebar ul button[id^="nav-"]');
 
-            // 모바일 메뉴 로직
+            // [NEW] 모바일 햄버거 메뉴 열기
             $('#open-menu-btn').onclick = () => {
                 sidebar.classList.remove('-translate-x-full');
                 backdrop.classList.remove('hidden');
             };
+
+            // [NEW] 모바일 메뉴 백드롭 클릭 시 닫기
             backdrop.onclick = () => {
                 sidebar.classList.add('-translate-x-full');
                 backdrop.classList.add('hidden');
             };
+
+            // [MODIFIED] 네비게이션 버튼 클릭 (모바일 닫기 기능 포함)
             navButtons.forEach(btn => {
                 btn.onclick = () => {
                     const viewId = 'view-' + btn.id.replace('nav-', '');
                     changeView(viewId);
-                    if (window.innerWidth < 768) { 
+                    
+                    // 모바일에서 메뉴 클릭 시 자동으로 사이드바 닫기
+                    if (window.innerWidth < 768) { // md breakpoint (768px)
                         sidebar.classList.add('-translate-x-full');
                         backdrop.classList.add('hidden');
                     }
                 };
             });
             
-            // 기존 폼/모달 이벤트
+            // 설정 및 모달 이벤트
             $('#managerIdInput').oninput = e => { state.managerId=e.target.value; localStorage.setItem('mgrId', e.target.value); };
             $('#open-asset-modal-new').onclick = () => $('#asset-modal').classList.remove('hidden');
             $('#close-asset-modal').onclick = () => { $('#asset-modal').classList.add('hidden'); $('#asset-form').reset(); resetLifecycleInputs(); };
+            
+            // 폼 제출 이벤트
             $('#asset-form').onsubmit = saveAsset;
             $('#consumption-form').onsubmit = saveConsumption;
+            
+            // 소모품 처리 드롭다운 변경 이벤트
             $('#cons-pcode').onchange = handleProductChange;
             $('#cons-serial').onchange = handleSerialChange;
             
+            // 수명 주기 타입 변경
             $('#lifecycle-type').onchange = (e) => {
                 const valInput = $('#lifecycle-value');
                 if (e.target.value === 'NONE') { 
@@ -426,47 +415,34 @@
                 }
             };
             
+            // '1회 사용' 버튼 이벤트 위임
             $('#lifecycle-list').addEventListener('click', async (e) => {
                 if (e.target.classList.contains('use-btn')) {
                     await handleUseAsset(e.target.getAttribute('data-pcode'), e.target.getAttribute('data-sn'));
                 }
             });
-            
-            // [NEW] 스캐너 버튼 이벤트 바인딩
-            $('#open-scanner-btn-product').onclick = () => {
-                // 스캔 대상 input을 '자산 코드'로 설정
-                scannerTargetInput = document.querySelector('#asset-form input[name="product_code"]');
-                startQrScanner();
-            };
-            $('#open-scanner-btn-serial').onclick = () => {
-                // 스캔 대상 input을 '시리얼 번호'로 설정
-                scannerTargetInput = document.querySelector('#asset-form input[name="serial_number"]');
-                startQrScanner();
-            };
-            $('#close-scanner-btn').onclick = () => stopQrScanner();
         }
 
-        // (수정 없음) resetLifecycleInputs
         function resetLifecycleInputs() {
              const valInput = $('#lifecycle-value');
              valInput.disabled = true; valInput.value = '';
              valInput.classList.add('bg-gray-200', 'cursor-not-allowed');
         }
 
-        // (수정 없음) changeView
         function changeView(id) {
             document.querySelectorAll('.view-content').forEach(el => el.classList.add('hidden'));
             $('#'+id).classList.remove('hidden');
             
+            // 네비 버튼 활성 상태 UI 변경
             document.querySelectorAll('#sidebar ul button').forEach(btn => btn.classList.remove('bg-indigo-600'));
             $('#nav-'+id.replace('view-','')).classList.add('bg-indigo-600');
             
+            // 뷰 진입 시 특정 동작 수행
             if(id === 'view-dashboard') render(); 
             if(id === 'view-consumption') updateConsumptionDropdowns();
             if(id === 'view-lifecycle') renderLifecycle();
         }
 
-        // (수정 없음) loadData
         async function loadData() {
             const [rMaster, rHistoryTop, rStock, rUseHistory] = await Promise.all([
                 supabase.from('MA_PRODUCT').select('*').order('created_at', { ascending: false }),
@@ -490,13 +466,12 @@
             render(); 
         }
 
-        // (수정 없음) subscribe
         function subscribe() {
             supabase.channel('public:all').on('postgres_changes', { event: '*', schema: 'public' }, () => loadData()).subscribe();
         }
 
         // =========================================
-        // (수정 없음) 렌더링 함수들
+        // 렌더링 함수들
         // =========================================
         function render() {
             $('#kpi-total-assets').innerText = state.assets.length.toLocaleString();
@@ -513,32 +488,48 @@
         function renderSafetyAlerts() {
             const alerts = [];
             const today = new Date();
+
             state.stock.forEach(item => {
                 const assetName = state.assets.find(a => a.product_code === item.product_code)?.product_name || item.product_code;
                 const identifier = `${assetName} (${item.product_code})${item.serial_number ? ' [SN:'+item.serial_number+']' : ''}`;
+
                 if (!item.cmf_3 || item.cmf_3 === 'NONE') {
                     if (item.safe_qty > 0 && item.qty <= item.safe_qty) {
-                        alerts.push({ type: '📦 재고 부족', level: 'danger', msg: `<span class="font-bold">${identifier}</span>의 재고가 부족합니다. (현재: ${item.qty} / 안전: ${item.safe_qty})` });
+                        alerts.push({
+                            type: '📦 재고 부족', level: 'danger', 
+                            msg: `<span class="font-bold">${identifier}</span>의 재고가 부족합니다. (현재: ${item.qty} / 안전: ${item.safe_qty})`
+                        });
                     }
-                } else if (item.cmf_3 === 'PERIOD') {
+                }
+                else if (item.cmf_3 === 'PERIOD') {
                     const created = new Date(item.created_at);
                     const monthsPassed = (today.getFullYear() - created.getFullYear()) * 12 + (today.getMonth() - created.getMonth());
                     const limit = parseInt(item.cmf_4 || '0');
                     if (limit > 0 && monthsPassed >= limit) {
-                        alerts.push({ type: '📅 교체 주기 도래', level: 'warning', msg: `<span class="font-bold">${identifier}</span>의 교체 주기가 되었습니다. (경과: ${monthsPassed}개월 / 주기: ${limit}개월)` });
+                        alerts.push({
+                            type: '📅 교체 주기 도래', level: 'warning', 
+                            msg: `<span class="font-bold">${identifier}</span>의 교체 주기가 되었습니다. (경과: ${monthsPassed}개월 / 주기: ${limit}개월)`
+                        });
                     }
-                } else if (item.cmf_3 === 'COUNT') {
+                }
+                else if (item.cmf_3 === 'COUNT') {
                     const key = `${item.product_code}|${item.serial_number||'null'}`;
                     const used = state.usageCounts[key] || 0;
                     const limit = parseInt(item.cmf_4 || '0');
                     if (limit > 0 && used >= limit) {
-                        alerts.push({ type: '🔢 사용 한계 도달', level: 'warning', msg: `<span class="font-bold">${identifier}</span>의 사용 횟수가 한계에 도달했습니다. (사용: ${used}회 / 한계: ${limit}회)` });
+                        alerts.push({
+                            type: '🔢 사용 한계 도달', level: 'warning', 
+                            msg: `<span class="font-bold">${identifier}</span>의 사용 횟수가 한계에 도달했습니다. (사용: ${used}회 / 한계: ${limit}회)`
+                        });
                     }
                 }
             });
+
             $('#kpi-action-required').innerText = alerts.length.toLocaleString();
+
             const alertSection = $('#alert-section');
             const alertList = $('#alert-list');
+            
             if (alerts.length === 0) {
                 alertSection.classList.add('hidden');
             } else {
@@ -547,7 +538,8 @@
                     <div class="flex items-start p-4 rounded-lg border-l-4 ${a.level === 'danger' ? 'bg-red-50 border-red-500 text-red-700' : 'bg-yellow-50 border-yellow-400 text-yellow-800'} shadow-sm">
                         <div class="flex-shrink-0 font-bold mr-3">${a.type}</div>
                         <div class="text-sm">${a.msg}</div>
-                    </div>`).join('');
+                    </div>
+                `).join('');
             }
         }
 
@@ -558,20 +550,31 @@
                 acc[wh] = (acc[wh] || 0) + item.qty;
                 return acc;
             }, {});
+
             if (Object.keys(whStock).length === 0) {
-                container.innerHTML = '<p class="text-sm text-slate-500">재고 정보가 없습니다.</p>'; return;
+                container.innerHTML = '<p class="text-sm text-slate-500">재고 정보가 없습니다.</p>';
+                return;
             }
-            container.innerHTML = Object.entries(whStock).sort((a, b) => b[1] - a[1]).map(([wh, qty]) => `
+
+            container.innerHTML = Object.entries(whStock)
+                .sort((a, b) => b[1] - a[1]) 
+                .map(([wh, qty]) => `
                 <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <span class="font-semibold text-slate-700">${wh} 창고</span>
                     <span class="font-bold text-indigo-600 text-lg">${qty.toLocaleString()} <span class="text-sm text-slate-400">ea</span></span>
-                </div>`).join('');
+                </div>
+            `).join('');
         }
 
         function renderDashboardHistory() {
             const tableBody = $('#dashboard-history-table');
-            const history = state.history.slice(0, 5); 
-            if (history.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">최근 활동이 없습니다.</td></tr>'; return; }
+            const history = state.history.slice(0, 5); // Top 5
+            
+            if (history.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">최근 활동이 없습니다.</td></tr>'; 
+                return; 
+            }
+            
             tableBody.innerHTML = history.map(h => {
                 let { typeClass, typeName } = getHistoryType(h.tran_code);
                 return `
@@ -587,7 +590,11 @@
         
         function renderHistory() {
             const tableBody = $('#recent-lot-history-table');
-            if (state.history.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">이력이 없습니다.</td></tr>'; return; }
+            if (state.history.length === 0) { 
+                tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">이력이 없습니다.</td></tr>'; 
+                return; 
+            }
+            
             tableBody.innerHTML = state.history.map(h => {
                 let { typeClass, typeName } = getHistoryType(h.tran_code);
                 return `
@@ -615,19 +622,23 @@
         function renderLifecycle() {
             const list = $('#lifecycle-list');
             const countItems = state.stock.filter(s => s.cmf_3 === 'COUNT');
+            
             if (countItems.length === 0) {
                 list.innerHTML = '<div class="col-span-full p-10 text-center text-slate-500 bg-slate-50 rounded-xl border border-dashed">횟수(COUNT)로 관리되는 자산이 없습니다.</div>';
                 return;
             }
+
             list.innerHTML = countItems.map(item => {
                 const asset = state.assets.find(a => a.product_code === item.product_code);
                 const assetName = asset ? asset.product_name : item.product_code;
                 const maxLife = parseInt(item.cmf_4 || '0');
                 const currentUse = state.usageCounts[`${item.product_code}|${item.serial_number||'null'}`] || 0;
                 const percent = maxLife > 0 ? Math.min((currentUse / maxLife) * 100, 100) : 0;
+                
                 let progressClass = '';
                 if (percent >= 100) progressClass = 'danger';
                 else if (percent >= 80) progressClass = 'warning';
+
                 return `
                 <div class="bg-white p-6 rounded-xl shadow border border-slate-200 flex flex-col justify-between">
                     <div>
@@ -659,6 +670,7 @@
             if(!checkMgr()) return;
             const serialVal = sn === '' ? null : sn; 
             if(!confirm(`[ ${pCode} ] 자산을 1회 사용 처리하시겠습니까?`)) return;
+
             showLoading(true, '사용 처리 중...');
             try {
                 const { error } = await supabase.from('LOT_HIS').insert({
@@ -668,32 +680,39 @@
                 });
                 if(error) throw error;
                 alertMsg('사용 처리가 완료되었습니다.');
-            } catch(e) { alertMsg('처리 실패: ' + e.message, true); } 
-            finally { showLoading(false); }
+            } catch(e) {
+                alertMsg('처리 실패: ' + e.message, true);
+            } finally { showLoading(false); }
         }
 
         function updateConsumptionDropdowns() {
             const pSelect = $('#cons-pcode');
             const currentVal = pSelect.value;
             const uniqueCodes = [...new Set(state.stock.map(s => s.product_code))].sort();
+            
             pSelect.innerHTML = '<option value="">자산 선택...</option>' + uniqueCodes.map(c => {
                 const a = state.assets.find(ax => ax.product_code === c);
                 return `<option value="${c}">${a ? a.product_name : c} (${c})</option>`;
             }).join('');
+            
             if(currentVal && uniqueCodes.includes(currentVal)) pSelect.value = currentVal;
             handleProductChange();
         }
+
         function handleProductChange() {
             const pCode = $('#cons-pcode').value;
             const sSelect = $('#cons-serial');
             $('#cons-wh-code').value = '';
             sSelect.innerHTML = '<option value="">선택하세요</option>';
+            
             if(!pCode) return;
+            
             state.stock.filter(s => s.product_code === pCode).forEach(i => {
                 const serialText = i.serial_number ? `S/N: ${i.serial_number}` : '(No Serial)';
                 sSelect.innerHTML += `<option value="${i.serial_number||''}" data-wh="${i.wh_code}">${serialText} | 창고: ${i.wh_code} | 재고: ${i.qty}ea</option>`;
             });
         }
+
         function handleSerialChange(e) {
             $('#cons-wh-code').value = e.target.selectedOptions[0]?.getAttribute('data-wh') || '';
         }
@@ -728,75 +747,7 @@
                     <span class="text-2xl font-extrabold text-indigo-900">${count}</span>
                 </div>`).join('');
         }
-        
-        // =========================================
-        // [NEW] 스캐너 로직 (수정됨)
-        // =========================================
 
-        /** 스캔 성공 시 공통 콜백 함수 */
-        function onScanSuccess(decodedText, decodedResult) {
-            // scannerTargetInput 변수에 저장된 input 요소를 찾음
-            if (scannerTargetInput) {
-                scannerTargetInput.value = decodedText; // 찾은 input에 스캔한 값을 입력
-                alertMsg('스캔된 값이 입력되었습니다.');
-            } else {
-                console.warn('스캔 대상(Target)이 지정되지 않았습니다.');
-            }
-            stopQrScanner(); // 스캔 완료 후 스캐너 중지
-        }
-
-        /** QR 스캐너 시작 함수 */
-        function startQrScanner() {
-            if (!scannerTargetInput) {
-                alertMsg('스캔할 필드를 먼저 선택해주세요 (버튼 클릭 오류).', true);
-                return;
-            }
-            
-            $('#scanner-modal').classList.remove('hidden');
-
-            // 스캐너 객체가 없거나 중지된 경우에만 새로 생성
-            if (!html5QrCodeScanner || html5QrCodeScanner.getState() === 1) { // 1 = NOT_STARTED
-                html5QrCodeScanner = new Html5QrcodeScanner(
-                    "qr-reader", 
-                    { 
-                        fps: 10, 
-                        qrbox: (viewfinderWidth, viewfinderHeight) => {
-                            const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.7;
-                            return { width: size, height: size };
-                        }
-                    },
-                    /* verbose= */ false
-                );
-            }
-            
-            // 스캐너 렌더링 (카메라 시작)
-            html5QrCodeScanner.render(onScanSuccess, (error) => {
-                // 스캔 중 발생하는 오류는 무시 (예: QR을 찾지 못함)
-            });
-        }
-
-        /** QR 스캐너 중지 및 모달 닫기 함수 */
-        function stopQrScanner() {
-            if (html5QrCodeScanner && html5QrCodeScanner.getState() !== 1) { // 1 = NOT_STARTED
-                try {
-                    html5QrCodeScanner.stop().then(() => {
-                        console.log("스캐너 중지됨.");
-                        html5QrCodeScanner.clear(); // 뷰파인더 제거
-                    }).catch(err => {
-                        console.warn("스캐너 중지 오류:", err);
-                        html5QrCodeScanner.clear(); // 오류 시에도 뷰파인더 강제 제거
-                    });
-                } catch (e) {
-                    console.error("스캐너 중지 실패:", e);
-                }
-            }
-            $('#scanner-modal').classList.add('hidden'); // 모달 닫기
-            scannerTargetInput = null; // [중요] 스캔 대상 초기화
-        }
-
-        // =========================================
-        // 폼 저장 로직 (수정 없음)
-        // =========================================
         async function saveAsset(e) {
             e.preventDefault(); if(!checkMgr()) return;
             const fd = new FormData(e.target);
