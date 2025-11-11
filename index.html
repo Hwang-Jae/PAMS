@@ -729,8 +729,8 @@
                 </div>`).join('');
         }
         
-        // =========================================
-        // [NEW] 스캐너 로직 (수정됨)
+       // =========================================
+        // [MODIFIED] 스캐너 로직 (최종 수정본)
         // =========================================
 
         /** 스캔 성공 시 공통 콜백 함수 */
@@ -745,7 +745,7 @@
             stopQrScanner(); // 스캔 완료 후 스캐너 중지
         }
 
-        /** [MODIFIED] QR 스캐너 시작 함수 (인식 형식 추가) */
+        /** [MODIFIED] QR 스캐너 시작 함수 (후면카메라 + 1D 바코드 형식 지원) */
         function startQrScanner() {
             if (!scannerTargetInput) {
                 alertMsg('스캔할 필드를 먼저 선택해주세요 (버튼 클릭 오류).', true);
@@ -757,21 +757,25 @@
             // 스캐너 객체가 없거나 중지된 경우에만 새로 생성
             if (!html5QrCodeScanner || html5QrCodeScanner.getState() === 1) { // 1 = NOT_STARTED
                 
-                // [수정] 스캐너 설정 객체
+                // 스캐너 설정 객체
                 const scannerConfig = {
                     fps: 10, 
                     qrbox: (viewfinderWidth, viewfinderHeight) => {
                         const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.7;
                         return { width: size, height: size };
                     },
-                    // [핵심] 지원할 바코드 형식 명시적 추가
+                    // [핵심 1] 지원할 바코드 형식 명시적 추가 (QR + 1D)
                     formatsToSupport: [
                         Html5QrcodeSupportedFormats.QR_CODE,
-                        Html5QrcodeSupportedFormats.CODE_128, // 자산관리에 많이 쓰임
+                        Html5QrcodeSupportedFormats.CODE_128, // 시리얼 번호에 많이 쓰임
                         Html5QrcodeSupportedFormats.CODE_39,
                         Html5QrcodeSupportedFormats.EAN_13,
                         Html5QrcodeSupportedFormats.UPC_A
-                    ]
+                    ],
+                    // [핵심 2] 후면 카메라('environment')를 기본값으로 설정
+                    camera: { 
+                        facingMode: "environment" 
+                    }
                 };
 
                 html5QrCodeScanner = new Html5QrcodeScanner(
