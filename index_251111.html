@@ -35,8 +35,7 @@
         </div>
 
         <div class="flex h-screen bg-slate-100">
-            
-            <nav id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-800 text-white flex flex-col shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+            <nav class="w-64 bg-slate-800 text-white flex flex-col fixed h-full z-30 shadow-lg">
                 <div class="px-6 py-5 border-b border-slate-700">
                     <h2 class="text-2xl font-bold text-indigo-400">P.A.M.S</h2>
                     <span class="text-xs text-slate-400">Product Asset Mgmt System</span>
@@ -53,153 +52,146 @@
                 </div>
             </nav>
 
-            <div id="sidebar-backdrop" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden"></div>
-
-            <main class="flex-1 md:ml-64 overflow-y-auto">
+            <main class="flex-1 ml-64 p-8 overflow-y-auto">
                 
-                <div id="mobile-header" class="md:hidden sticky top-0 z-30 bg-slate-800 text-white p-4 flex justify-between items-center shadow-lg">
-                    <div>
-                        <h2 class="text-xl font-bold text-indigo-400">P.A.M.S</h2>
-                    </div>
-                    <button id="open-menu-btn" class="p-2 rounded-lg hover:bg-slate-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="p-4 md:p-8">
-                
-                    <div id="view-dashboard" class="view-content animate-fade-in">
-                        <h1 class="text-3xl font-extrabold text-slate-800 mb-6">현황 모니터링</h1>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <div class="bg-white p-6 rounded-xl shadow border-b-4 border-indigo-500">
-                                <p class="text-sm font-medium text-slate-500">총 등록 자산 (Master)</p>
-                                <p id="kpi-total-assets" class="text-4xl font-extrabold text-slate-900 mt-2">0</p>
-                            </div>
-                            <div class="bg-white p-6 rounded-xl shadow border-b-4 border-green-500">
-                                <p class="text-sm font-medium text-slate-500">현재 총 재고량 (Stock)</p>
-                                <p id="kpi-total-stock" class="text-4xl font-extrabold text-slate-900 mt-2">0</p>
-                            </div>
-                            <div class="bg-white p-6 rounded-xl shadow border-b-4 border-red-500">
-                                <p class="text-sm font-medium text-slate-500">🚨 조치 필요 항목</p>
-                                <p id="kpi-action-required" class="text-4xl font-extrabold text-red-600 mt-2">0</p>
-                            </div>
+                <div id="view-dashboard" class="view-content animate-fade-in">
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-6">현황 모니터링</h1>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow border-b-4 border-indigo-500">
+                            <p class="text-sm font-medium text-slate-500">총 등록 자산 (Master)</p>
+                            <p id="kpi-total-assets" class="text-4xl font-extrabold text-slate-900 mt-2">0</p>
                         </div>
-
-                        <div id="alert-section" class="hidden mb-8">
-                            <h2 class="text-xl font-bold text-red-600 flex items-center mb-4"><span class="mr-2">🚨</span> 긴급 조치 필요 항목</h2>
-                            <div id="alert-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+                        <div class="bg-white p-6 rounded-xl shadow border-b-4 border-green-500">
+                            <p class="text-sm font-medium text-slate-500">현재 총 재고량 (Stock)</p>
+                            <p id="kpi-total-stock" class="text-4xl font-extrabold text-slate-900 mt-2">0</p>
                         </div>
-
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow">
-                                <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">📦 창고별 재고 현황</h3>
-                                <div id="stock-by-warehouse-container" class="space-y-4"></div>
-                            </div>
-                            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow">
-                                <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">⚡ 최근 활동 (Top 5)</h3>
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-slate-200">
-                                        <thead class="bg-slate-50"><tr><th class="p-3 text-left">처리</th><th class="p-3 text-left">코드</th><th class="p-3 text-left">시리얼</th><th class="p-3 text-right">수량</th><th class="p-3 text-left">시간</th></tr></thead>
-                                        <tbody id="dashboard-history-table" class="divide-y divide-slate-200"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-6 rounded-xl shadow mb-8">
-                            <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">📊 자재 유형별 마스터 현황</h3>
-                            <div id="type-breakdown-container" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
+                        <div class="bg-white p-6 rounded-xl shadow border-b-4 border-red-500">
+                            <p class="text-sm font-medium text-slate-500">🚨 조치 필요 항목</p>
+                            <p id="kpi-action-required" class="text-4xl font-extrabold text-red-600 mt-2">0</p>
                         </div>
                     </div>
 
-                    <div id="view-assets" class="view-content animate-fade-in hidden">
-                        <h1 class="text-3xl font-extrabold text-slate-800 mb-6">자산 마스터 관리</h1>
-                        
-                        <div class="flex flex-col md:flex-row justify-between items-center p-4 bg-white rounded-xl shadow mb-8 space-y-4 md:space-y-0">
-                            <button id="open-asset-modal-new" class="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition">+ 새 자산 등록</button>
-                            <div class="flex flex-col md:flex-row w-full md:w-auto space-y-3 md:space-y-0 md:space-x-3 opacity-50 cursor-not-allowed">
-                                <label class="w-full md:w-auto block text-center px-6 py-3 bg-slate-200 text-slate-800 font-semibold rounded-lg">📤 엑셀 업로드</label>
-                                <button class="w-full md:w-auto px-6 py-3 bg-slate-200 text-slate-800 font-semibold rounded-lg">⬇️ 엑셀 다운로드</button>
+                    <div id="alert-section" class="hidden mb-8">
+                        <h2 class="text-xl font-bold text-red-600 flex items-center mb-4">
+                            <span class="mr-2">🚨</span> 긴급 조치 필요 항목
+                        </h2>
+                        <div id="alert-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             </div>
-                        </div>
-                        <div id="asset-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
                     </div>
 
-                    <div id="view-consumption" class="view-content animate-fade-in hidden">
-                        <h1 class="text-3xl font-extrabold text-slate-800 mb-6">일일 소모/반환 현황</h1>
-                        <div class="bg-white p-6 rounded-xl shadow mb-8">
-                            <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">재고 수기 처리</h3>
-                            <form id="consumption-form" class="space-y-4">
-                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-700">자산 코드 (product_code) *</label>
-                                        <select name="product_code" id="cons-pcode" required class="font-mono"><option value="">자산 선택...</option></select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-700">시리얼 (serial / 창고) *</label>
-                                        <select name="serial_number" id="cons-serial" required class="font-mono"><option value="">먼저 자산 코드를 선택하세요</option></select>
-                                    </div>
-                                    <input type="hidden" name="wh_code" id="cons-wh-code">
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-700">수량 (qty) *</label>
-                                        <input type="number" name="qty" required min="1" value="1">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-700">처리 (tran_code) *</label>
-                                        <select name="tran_code">
-                                            <option value="CONSUME">소모 (출고)</option>
-                                            <option value="ROLLBACK">반환 (입고)</option>
-                                        </select>
-                                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow">
+                            <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">📦 창고별 재고 현황</h3>
+                            <div id="stock-by-warehouse-container" class="space-y-4">
                                 </div>
-                                <div class="flex justify-end pt-3">
-                                    <button type="submit" class="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">처리 등록</button>
-                                </div>
-                            </form>
                         </div>
-                        <div class="bg-white p-6 rounded-xl shadow">
-                            <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">최근 처리 이력 (Top 20)</h3>
+
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow">
+                            <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">⚡ 최근 활동 (Top 5)</h3>
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-slate-200">
-                                    <thead class="bg-slate-50"><tr><th class="p-3 text-left">처리</th><th class="p-3 text-left">코드</th><th class="p-3 text-left">시리얼</th><th class="p-3 text-right">수량</th><th class="p-3 text-left">시간</th></tr></thead>
-                                    <tbody id="recent-lot-history-table" class="divide-y divide-slate-200"></tbody>
+                                    <thead class="bg-slate-50">
+                                        <tr><th class="p-3 text-left">처리</th><th class="p-3 text-left">코드</th><th class="p-3 text-left">시리얼</th><th class="p-3 text-right">수량</th><th class="p-3 text-left">시간</th></tr>
+                                    </thead>
+                                    <tbody id="dashboard-history-table" class="divide-y divide-slate-200">
+                                        </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
-                    <div id="view-lifecycle" class="view-content animate-fade-in hidden">
-                        <h1 class="text-3xl font-extrabold text-slate-800 mb-6">횟수 수명 관리</h1>
-                        <div class="bg-white p-6 rounded-xl shadow mb-8">
-                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b pb-3">
-                                <h3 class="text-xl font-semibold text-slate-800 mb-2 md:mb-0">사용 횟수(COUNT) 관리 대상</h3>
-                                <p class="text-sm text-slate-500">💡 '1회 사용' 버튼을 누르면 횟수가 증가합니다.</p>
+                    <div class="bg-white p-6 rounded-xl shadow mb-8">
+                        <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">📊 자재 유형별 마스터 현황</h3>
+                        <div id="type-breakdown-container" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
+                    </div>
+                </div>
+
+                <div id="view-assets" class="view-content animate-fade-in hidden">
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-6">자산 마스터 관리</h1>
+                    <div class="flex justify-between items-center p-4 bg-white rounded-xl shadow mb-8">
+                        <button id="open-asset-modal-new" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition">+ 새 자산 등록</button>
+                        <div class="flex space-x-3 opacity-50 cursor-not-allowed">
+                            <label class="px-6 py-3 bg-slate-200 text-slate-800 font-semibold rounded-lg">📤 엑셀 업로드</label>
+                            <button class="px-6 py-3 bg-slate-200 text-slate-800 font-semibold rounded-lg">⬇️ 엑셀 다운로드</button>
+                        </div>
+                    </div>
+                    <div id="asset-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                </div>
+
+                <div id="view-consumption" class="view-content animate-fade-in hidden">
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-6">일일 소모/반환 현황</h1>
+                    <div class="bg-white p-6 rounded-xl shadow mb-8">
+                        <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">재고 수기 처리</h3>
+                        <form id="consumption-form" class="space-y-4">
+                            <div class="grid grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">자산 코드 (product_code) *</label>
+                                    <select name="product_code" id="cons-pcode" required class="font-mono"><option value="">자산 선택...</option></select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">시리얼 (serial / 창고) *</label>
+                                    <select name="serial_number" id="cons-serial" required class="font-mono"><option value="">먼저 자산 코드를 선택하세요</option></select>
+                                </div>
+                                <input type="hidden" name="wh_code" id="cons-wh-code">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">수량 (qty) *</label>
+                                    <input type="number" name="qty" required min="1" value="1">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">처리 (tran_code) *</label>
+                                    <select name="tran_code">
+                                        <option value="CONSUME">소모 (출고)</option>
+                                        <option value="ROLLBACK">반환 (입고)</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div id="lifecycle-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                            <div class="flex justify-end pt-3">
+                                <button type="submit" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">처리 등록</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">최근 처리 이력 (Top 20)</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50">
+                                    <tr><th class="p-3 text-left">처리</th><th class="p-3 text-left">코드</th><th class="p-3 text-left">시리얼</th><th class="p-3 text-right">수량</th><th class="p-3 text-left">시간</th></tr>
+                                </thead>
+                                <tbody id="recent-lot-history-table" class="divide-y divide-slate-200"></tbody>
+                            </table>
                         </div>
                     </div>
+                </div>
 
-                    <div id="view-settings" class="view-content animate-fade-in hidden">
-                        <h1 class="text-3xl font-extrabold text-slate-800 mb-6">설정</h1>
-                        <div class="bg-white p-8 rounded-xl shadow max-w-xl">
-                            <label class="block text-sm font-medium text-slate-700">관리자 ID / 이름 (필수)</label>
-                            <input type="text" id="managerIdInput" placeholder="예: HONG-001" class="mt-1 block w-full border border-slate-300 rounded-lg p-3">
-                            <p class="text-sm text-slate-500 mt-2">* 모든 트랜잭션 기록에 이 ID가 사용됩니다.</p>
+                <div id="view-lifecycle" class="view-content animate-fade-in hidden">
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-6">횟수 수명 관리</h1>
+                    <div class="bg-white p-6 rounded-xl shadow mb-8">
+                        <div class="flex justify-between items-center mb-5 border-b pb-3">
+                            <h3 class="text-xl font-semibold text-slate-800">사용 횟수(COUNT) 관리 대상</h3>
+                            <p class="text-sm text-slate-500">💡 '1회 사용' 버튼을 누르면 사용 횟수가 증가하고 수명 게이지가 찹니다.</p>
                         </div>
+                        <div id="lifecycle-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                     </div>
+                </div>
 
-                </div></main>
+                <div id="view-settings" class="view-content animate-fade-in hidden">
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-6">설정</h1>
+                    <div class="bg-white p-8 rounded-xl shadow max-w-xl">
+                        <label class="block text-sm font-medium text-slate-700">관리자 ID / 이름 (필수)</label>
+                        <input type="text" id="managerIdInput" placeholder="예: HONG-001" class="mt-1 block w-full border border-slate-300 rounded-lg p-3">
+                        <p class="text-sm text-slate-500 mt-2">* 모든 트랜잭션 기록에 이 ID가 사용됩니다.</p>
+                    </div>
+                </div>
+            </main>
         </div>
 
         <div id="asset-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-40 hidden">
-            <div class="bg-white rounded-xl w-full max-w-4xl p-6 md:p-8 overflow-y-auto max-h-[90vh]">
+            <div class="bg-white rounded-xl w-full max-w-4xl p-8 overflow-y-auto max-h-[90vh]">
                 <h3 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-3">새 자산 등록</h3>
                 <form id="asset-form">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-indigo-50 rounded-xl">
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div class="col-span-2 grid grid-cols-2 gap-6 p-4 bg-indigo-50 rounded-xl">
                             <div><label class="block text-sm font-medium text-indigo-900">공장 (factory_id) *</label>
                                 <select name="factory_id" required class="border-indigo-300">
                                     <option value="USB">USB (울산 전동화 공장)</option>
@@ -216,7 +208,7 @@
                             </div>
                         </div>
 
-                        <div class="col-span-1 md:col-span-2"><label class="block text-sm font-medium text-slate-700">자산명 (product_name) *</label><input type="text" name="product_name" required placeholder="예: 전동 드라이버 A-Type"></div>
+                        <div class="col-span-2"><label class="block text-sm font-medium text-slate-700">자산명 (product_name) *</label><input type="text" name="product_name" required placeholder="예: 전동 드라이버 A-Type"></div>
                         <div><label class="block text-sm font-medium text-slate-700">자산 코드 (product_code) *</label><input type="text" name="product_code" required placeholder="예: TOL-DRV-001"></div>
                         <div><label class="block text-sm font-medium text-slate-700">구매일 *</label><input type="date" name="purchase_date" required></div>
                         
@@ -243,7 +235,7 @@
                             </select>
                         </div>
 
-                        <div class="col-span-1 md:col-span-2"><label class="block text-sm font-medium text-slate-700">사용 부서 (dept) *</label>
+                        <div><label class="block text-sm font-medium text-slate-700">사용 부서 (dept) *</label>
                             <select name="dept" required>
                                 <option value="">선택...</option>
                                 <option value="ICT 기획팀">ICT 기획팀 (ICT)</option>
@@ -270,8 +262,8 @@
                             </select>
                         </div>
 
-                        <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-100 rounded-xl border border-slate-200">
-                            <h4 class="col-span-1 md:col-span-2 text-sm font-bold text-slate-700 mb-[-10px]">제품 수명 주기 관리 (Product Life Cycle)</h4>
+                        <div class="col-span-2 grid grid-cols-2 gap-6 p-4 bg-slate-100 rounded-xl border border-slate-200">
+                            <h4 class="col-span-2 text-sm font-bold text-slate-700 mb-[-10px]">제품 수명 주기 관리 (Product Life Cycle)</h4>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700">관리 유형 (cmf_3)</label>
                                 <select name="cmf_3" id="lifecycle-type">
@@ -287,8 +279,10 @@
                         </div>
 
                         <div><label class="block text-sm font-medium text-slate-700 bg-gray-50 p-1 rounded">내부 관리 코드 (자동생성)</label><input type="text" name="cmf_2" readonly class="bg-gray-100 text-slate-500 cursor-not-allowed" placeholder="저장 시 자동 생성됨"></div>
+
                         <div><label class="block text-sm font-medium text-slate-700">시리얼 번호 (선택)</label><input type="text" name="serial_number" placeholder="없을 경우 비워두세요"></div>
                         <div><label class="block text-sm font-medium text-slate-700">실사용자 (선택)</label><input type="text" name="user" placeholder="예: 홍길동"></div>
+                        
                         <div><label class="block text-sm font-medium text-slate-700">초기 수량 (qty) *</label><input type="number" name="qty" min="0" value="1" required></div>
                         <div><label class="block text-sm font-medium text-slate-700">안전 재고 (safe_qty)</label><input type="number" name="safe_qty" min="0" value="0"></div>
                         
@@ -302,9 +296,9 @@
                             </select>
                         </div>
                     </div>
-                    <div class="flex flex-col-reverse md:flex-row justify-end space-y-2 md:space-y-0 md:space-x-3 border-t pt-4">
-                        <button type="button" id="close-asset-modal" class="w-full md:w-auto px-5 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">취소</button>
-                        <button type="submit" class="w-full md:w-auto px-5 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">저장 하기</button>
+                    <div class="flex justify-end space-x-3 border-t pt-4">
+                        <button type="button" id="close-asset-modal" class="px-5 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">취소</button>
+                        <button type="submit" class="px-5 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">저장 하기</button>
                     </div>
                 </form>
             </div>
@@ -320,10 +314,10 @@
 
         // 전역 상태 관리
         const state = { 
-            assets: [],      
-            history: [],     
-            stock: [],       
-            usageCounts: {}, 
+            assets: [],      // MA_PRODUCT 마스터 데이터
+            history: [],     // 최근 20건 트랜잭션 이력
+            stock: [],       // WH_STS 현재 재고 데이터
+            usageCounts: {}, // 'COUNT' 타입 자산의 총 사용 횟수 캐시 { "code|serial": count }
             managerId: localStorage.getItem('mgrId') || '' 
         };
         
@@ -344,9 +338,9 @@
                 supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
                 if(state.managerId) $('#managerIdInput').value = state.managerId;
                 
-                await loadData(); 
-                subscribe();      
-                bindEvents();     
+                await loadData(); // 초기 데이터 로드
+                subscribe();      // 실시간 구독 시작
+                bindEvents();     // 이벤트 바인딩
 
                 $('#connection-status').innerText = '🟢 Connected (Realtime)';
             } catch(e) {
@@ -355,37 +349,9 @@
             } finally { showLoading(false); }
         }
 
-        // [MODIFIED] 이벤트 바인딩 (모바일 메뉴 로직 추가)
         function bindEvents() {
-            const sidebar = $('#sidebar');
-            const backdrop = $('#sidebar-backdrop');
-            const navButtons = document.querySelectorAll('#sidebar ul button[id^="nav-"]');
-
-            // [NEW] 모바일 햄버거 메뉴 열기
-            $('#open-menu-btn').onclick = () => {
-                sidebar.classList.remove('-translate-x-full');
-                backdrop.classList.remove('hidden');
-            };
-
-            // [NEW] 모바일 메뉴 백드롭 클릭 시 닫기
-            backdrop.onclick = () => {
-                sidebar.classList.add('-translate-x-full');
-                backdrop.classList.add('hidden');
-            };
-
-            // [MODIFIED] 네비게이션 버튼 클릭 (모바일 닫기 기능 포함)
-            navButtons.forEach(btn => {
-                btn.onclick = () => {
-                    const viewId = 'view-' + btn.id.replace('nav-', '');
-                    changeView(viewId);
-                    
-                    // 모바일에서 메뉴 클릭 시 자동으로 사이드바 닫기
-                    if (window.innerWidth < 768) { // md breakpoint (768px)
-                        sidebar.classList.add('-translate-x-full');
-                        backdrop.classList.add('hidden');
-                    }
-                };
-            });
+            // 네비게이션 클릭 이벤트
+            ['dashboard','assets','consumption','lifecycle','settings'].forEach(v => $('#nav-'+v).onclick = () => changeView('view-'+v));
             
             // 설정 및 모달 이벤트
             $('#managerIdInput').oninput = e => { state.managerId=e.target.value; localStorage.setItem('mgrId', e.target.value); };
@@ -400,7 +366,7 @@
             $('#cons-pcode').onchange = handleProductChange;
             $('#cons-serial').onchange = handleSerialChange;
             
-            // 수명 주기 타입 변경
+            // 수명 주기 타입 변경 시 입력 필드 활성/비활성 처리
             $('#lifecycle-type').onchange = (e) => {
                 const valInput = $('#lifecycle-value');
                 if (e.target.value === 'NONE') { 
@@ -415,7 +381,7 @@
                 }
             };
             
-            // '1회 사용' 버튼 이벤트 위임
+            // [Lifecycle] '1회 사용' 버튼 이벤트 위임
             $('#lifecycle-list').addEventListener('click', async (e) => {
                 if (e.target.classList.contains('use-btn')) {
                     await handleUseAsset(e.target.getAttribute('data-pcode'), e.target.getAttribute('data-sn'));
@@ -432,18 +398,17 @@
         function changeView(id) {
             document.querySelectorAll('.view-content').forEach(el => el.classList.add('hidden'));
             $('#'+id).classList.remove('hidden');
-            
-            // 네비 버튼 활성 상태 UI 변경
-            document.querySelectorAll('#sidebar ul button').forEach(btn => btn.classList.remove('bg-indigo-600'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('bg-indigo-600'));
             $('#nav-'+id.replace('view-','')).classList.add('bg-indigo-600');
             
             // 뷰 진입 시 특정 동작 수행
-            if(id === 'view-dashboard') render(); 
+            if(id === 'view-dashboard') render(); // 대시보드 갱신
             if(id === 'view-consumption') updateConsumptionDropdowns();
             if(id === 'view-lifecycle') renderLifecycle();
         }
 
         async function loadData() {
+            // Promise.all로 병렬 데이터 로드
             const [rMaster, rHistoryTop, rStock, rUseHistory] = await Promise.all([
                 supabase.from('MA_PRODUCT').select('*').order('created_at', { ascending: false }),
                 supabase.from('LOT_HIS').select('*').order('created_at', { ascending: false }).limit(20),
@@ -456,6 +421,7 @@
             state.history = rHistoryTop.data || [];
             state.stock = rStock.data || [];
 
+            // 사용 횟수 전역 집계 (캐싱)
             state.usageCounts = {};
             if (rUseHistory.data) {
                 rUseHistory.data.forEach(h => {
@@ -463,28 +429,31 @@
                     state.usageCounts[key] = (state.usageCounts[key] || 0) + (h.qty || 0);
                 });
             }
-            render(); 
+
+            render(); // 데이터 로드 후 화면 갱신
         }
 
         function subscribe() {
+            // DB 변경 사항 실시간 감지
             supabase.channel('public:all').on('postgres_changes', { event: '*', schema: 'public' }, () => loadData()).subscribe();
         }
 
         // =========================================
-        // 렌더링 함수들
+        // [핵심] 렌더링 관련 함수들 (대시보드 개선)
         // =========================================
         function render() {
             $('#kpi-total-assets').innerText = state.assets.length.toLocaleString();
             $('#kpi-total-stock').innerText = state.stock.reduce((sum, i) => sum + i.qty, 0).toLocaleString();
             
-            renderSafetyAlerts();       
-            renderAssets();             
-            renderHistory();            
-            renderTypeBreakdown();      
-            renderStockByWarehouse();   
-            renderDashboardHistory();   
+            renderSafetyAlerts();       // [MODIFIED] 안전재고 현황 + KPI 업데이트
+            renderAssets();             // 자산 마스터 리스트
+            renderHistory();            // (소모/반환 탭) 최근 이력 테이블
+            renderTypeBreakdown();      // (대시보드) 유형별 통계
+            renderStockByWarehouse();   // [NEW] (대시보드) 창고별 재고
+            renderDashboardHistory();   // [NEW] (대시보드) 최근 활동 요약
         }
 
+        // [MODIFIED] 안전재고 및 리스크 분석 + KPI 업데이트
         function renderSafetyAlerts() {
             const alerts = [];
             const today = new Date();
@@ -493,40 +462,48 @@
                 const assetName = state.assets.find(a => a.product_code === item.product_code)?.product_name || item.product_code;
                 const identifier = `${assetName} (${item.product_code})${item.serial_number ? ' [SN:'+item.serial_number+']' : ''}`;
 
+                // 1. 일반 안전재고 부족 (NONE or null)
                 if (!item.cmf_3 || item.cmf_3 === 'NONE') {
                     if (item.safe_qty > 0 && item.qty <= item.safe_qty) {
                         alerts.push({
-                            type: '📦 재고 부족', level: 'danger', 
+                            type: '📦 재고 부족',
+                            level: 'danger', 
                             msg: `<span class="font-bold">${identifier}</span>의 재고가 부족합니다. (현재: ${item.qty} / 안전: ${item.safe_qty})`
                         });
                     }
                 }
+                // 2. 주기(PERIOD) 도래
                 else if (item.cmf_3 === 'PERIOD') {
                     const created = new Date(item.created_at);
                     const monthsPassed = (today.getFullYear() - created.getFullYear()) * 12 + (today.getMonth() - created.getMonth());
                     const limit = parseInt(item.cmf_4 || '0');
                     if (limit > 0 && monthsPassed >= limit) {
                         alerts.push({
-                            type: '📅 교체 주기 도래', level: 'warning', 
+                            type: '📅 교체 주기 도래',
+                            level: 'warning', 
                             msg: `<span class="font-bold">${identifier}</span>의 교체 주기가 되었습니다. (경과: ${monthsPassed}개월 / 주기: ${limit}개월)`
                         });
                     }
                 }
+                // 3. 사용 횟수(COUNT) 초과
                 else if (item.cmf_3 === 'COUNT') {
                     const key = `${item.product_code}|${item.serial_number||'null'}`;
                     const used = state.usageCounts[key] || 0;
                     const limit = parseInt(item.cmf_4 || '0');
                     if (limit > 0 && used >= limit) {
                         alerts.push({
-                            type: '🔢 사용 한계 도달', level: 'warning', 
+                            type: '🔢 사용 한계 도달',
+                            level: 'warning', 
                             msg: `<span class="font-bold">${identifier}</span>의 사용 횟수가 한계에 도달했습니다. (사용: ${used}회 / 한계: ${limit}회)`
                         });
                     }
                 }
             });
 
+            // [NEW] 조치 필요 KPI 업데이트
             $('#kpi-action-required').innerText = alerts.length.toLocaleString();
 
+            // 알림 섹션 표시 여부 결정
             const alertSection = $('#alert-section');
             const alertList = $('#alert-list');
             
@@ -543,6 +520,7 @@
             }
         }
 
+        // [NEW] 대시보드 - 창고별 재고 현황 렌더링
         function renderStockByWarehouse() {
             const container = $('#stock-by-warehouse-container');
             const whStock = state.stock.reduce((acc, item) => {
@@ -557,7 +535,7 @@
             }
 
             container.innerHTML = Object.entries(whStock)
-                .sort((a, b) => b[1] - a[1]) 
+                .sort((a, b) => b[1] - a[1]) // 수량 많은 순 정렬
                 .map(([wh, qty]) => `
                 <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <span class="font-semibold text-slate-700">${wh} 창고</span>
@@ -566,6 +544,7 @@
             `).join('');
         }
 
+        // [NEW] 대시보드 - 최근 활동 (Top 5) 렌더링
         function renderDashboardHistory() {
             const tableBody = $('#dashboard-history-table');
             const history = state.history.slice(0, 5); // Top 5
@@ -588,6 +567,7 @@
             }).join('');
         }
         
+        // [분리] 이력 테이블 렌더링 (소모/반환 탭)
         function renderHistory() {
             const tableBody = $('#recent-lot-history-table');
             if (state.history.length === 0) { 
@@ -608,6 +588,7 @@
             }).join('');
         }
 
+        // [NEW] 트랜잭션 코드 -> 이름/클래스 변환 유틸
         function getHistoryType(tranCode) {
             let typeClass = 'text-slate-600', typeName = tranCode;
             switch(tranCode) {
@@ -618,6 +599,12 @@
             }
             return { typeClass, typeName };
         }
+
+        // =========================================
+        // 
+        //  (수정 없음) 기존 함수들
+        // 
+        // =========================================
 
         function renderLifecycle() {
             const list = $('#lifecycle-list');
@@ -636,8 +623,8 @@
                 const percent = maxLife > 0 ? Math.min((currentUse / maxLife) * 100, 100) : 0;
                 
                 let progressClass = '';
-                if (percent >= 100) progressClass = 'danger';
-                else if (percent >= 80) progressClass = 'warning';
+                if (percent >= 100) progressClass = 'danger';       // 100% 이상 빨강
+                else if (percent >= 80) progressClass = 'warning';  // 80% 이상 노랑
 
                 return `
                 <div class="bg-white p-6 rounded-xl shadow border border-slate-200 flex flex-col justify-between">
@@ -674,11 +661,14 @@
             showLoading(true, '사용 처리 중...');
             try {
                 const { error } = await supabase.from('LOT_HIS').insert({
-                    tran_code: 'USE', product_code: pCode,
-                    serial_number: serialVal, qty: 1,
+                    tran_code: 'USE',
+                    product_code: pCode,
+                    serial_number: serialVal,
+                    qty: 1,
                     create_user_id: state.managerId
                 });
                 if(error) throw error;
+                // loadData가 자동으로 호출되어(subscribe 덕분) 화면이 갱신됩니다.
                 alertMsg('사용 처리가 완료되었습니다.');
             } catch(e) {
                 alertMsg('처리 실패: ' + e.message, true);
