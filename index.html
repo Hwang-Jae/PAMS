@@ -729,7 +729,7 @@
                 </div>`).join('');
         }
         
-       // =========================================
+      // =========================================
         // [MODIFIED] 스캐너 로직 (최종 수정본)
         // =========================================
 
@@ -745,7 +745,7 @@
             stopQrScanner(); // 스캔 완료 후 스캐너 중지
         }
 
-        /** [MODIFIED] QR 스캐너 시작 함수 (후면카메라 + 1D 바코드 형식 지원) */
+        /** [MODIFIED] QR 스캐너 시작 함수 (window. 전역 객체 명시) */
         function startQrScanner() {
             if (!scannerTargetInput) {
                 alertMsg('스캔할 필드를 먼저 선택해주세요 (버튼 클릭 오류).', true);
@@ -764,15 +764,16 @@
                         const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.7;
                         return { width: size, height: size };
                     },
-                    // [핵심 1] 지원할 바코드 형식 명시적 추가 (QR + 1D)
+                    
+                    // [핵심 수정] 'window.'를 붙여 전역 객체임을 명시
                     formatsToSupport: [
-                        Html5QrcodeSupportedFormats.QR_CODE,
-                        Html5QrcodeSupportedFormats.CODE_128, // 시리얼 번호에 많이 쓰임
-                        Html5QrcodeSupportedFormats.CODE_39,
-                        Html5QrcodeSupportedFormats.EAN_13,
-                        Html5QrcodeSupportedFormats.UPC_A
+                        window.Html5QrcodeSupportedFormats.QR_CODE,
+                        window.Html5QrcodeSupportedFormats.CODE_128,
+                        window.Html5QrcodeSupportedFormats.CODE_39,
+                        window.Html5QrcodeSupportedFormats.EAN_13,
+                        window.Html5QrcodeSupportedFormats.UPC_A
                     ],
-                    // [핵심 2] 후면 카메라('environment')를 기본값으로 설정
+                    
                     camera: { 
                         facingMode: "environment" 
                     }
@@ -787,11 +788,11 @@
             
             // 스캐너 렌더링 (카메라 시작)
             html5QrCodeScanner.render(onScanSuccess, (error) => {
-                // 스캔 중 발생하는 오류는 무시 (예: QR을 찾지 못함)
+                // 스캔 중 발생하는 오류는 무시
             });
         }
 
-        /** QR 스캐너 중지 및 모달 닫기 함수 */
+        /** QR 스캐너 중지 및 모달 닫기 함수 (수정 없음) */
         function stopQrScanner() {
             if (html5QrCodeScanner && html5QrCodeScanner.getState() !== 1) { // 1 = NOT_STARTED
                 try {
@@ -800,7 +801,7 @@
                         html5QrCodeScanner.clear(); // 뷰파인더 제거
                     }).catch(err => {
                         console.warn("스캐너 중지 오류:", err);
-                        html5QrcodeScanner.clear(); // 오류 시에도 뷰파인더 강제 제거
+                        html5QrCodeScanner.clear(); // 오류 시에도 뷰파인더 강제 제거
                     });
                 } catch (e) {
                     console.error("스캐너 중지 실패:", e);
