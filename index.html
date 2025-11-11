@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자산 관리 시스템 (P.A.M.S)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+        window.supabaseCreateClient = createClient;
+    </script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <style>
+        :host, body, html { font-family: 'Inter', sans-serif; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        select, input[type="text"], input[type="date"], input[type="number"], textarea {
+            @apply mt-1 block w-full border border-slate-300 rounded-lg shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500;
+        }
+        progress { @apply w-full h-2 rounded-full overflow-hidden; }
+        progress::-webkit-progress-bar { @apply bg-slate-200; }
+        progress::-webkit-progress-value { @apply bg-indigo-600 transition-all duration-500; }
+        progress.warning::-webkit-progress-value { @apply bg-yellow-500; }
+        progress.danger::-webkit-progress-value { @apply bg-red-500; }
+    </style>
+</head>
+<body class="bg-slate-100">
+
+    <div id="app-root">
+        <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+            <div class="flex flex-col items-center p-6 bg-white rounded-lg shadow-2xl">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mb-3"></div>
+                <p id="loading-text" class="text-lg font-semibold text-gray-700">처리 중...</p>
+            </div>
+        </div>
+
+        <div class="flex h-screen bg-slate-100">
+            <nav class="w-64 bg-slate-800 text-white flex flex-col fixed h-full z-30 shadow-lg">
+                <div class="px-6 py-5 border-b border-slate-700">
+                    <h2 class="text-2xl font-bold text-indigo-400">P.A.M.S</h2>
+                    <span class="text-xs text-slate-400">Product Asset Mgmt System</span>
+                </div>
+                <ul class="flex-1 py-4 space-y-2">
+                    <li class="px-4"><button id="nav-dashboard" class="w-full flex items-center px-4 py-3 rounded-lg hover:bg-slate-700 bg-indigo-600 transition-colors">📊 현황 모니터링</button></li>
+                    <li class="px-4"><button id="nav-assets" class="w-full flex items-center px-4 py-3 rounded-lg hover:bg-slate-700 transition-colors">🖥️ 자산 마스터</button></li>
+                    <li class="px-4"><button id="nav-consumption" class="w-full flex items-center px-4 py-3 rounded-lg hover:bg-slate-700 transition-colors">📉 소모/반환 현황</button></li>
+                    <li class="px-4"><button id="nav-lifecycle" class="w-full flex items-center px-4 py-3 rounded-lg hover:bg-slate-700 transition-colors">🔄 횟수 수명 관리</button></li>
+                    <li class="px-4"><button id="nav-settings" class="w-full flex items-center px-4 py-3 rounded-lg hover:bg-slate-700 transition-colors">⚙️ 설정</button></li>
+                </ul>
+                <div class="px-6 py-4 border-t border-slate-700 text-xs text-slate-400">
+                    <p id="connection-status">Connecting...</p>
+                </div>
+            </nav>
+
+            <main class="flex-1 ml-64 p-8 overflow-y-auto">
+                
+                <div id="view-dashboard" class="view-content animate-fade-in">
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-6">현황 모니터링</h1>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow border-b-4 border-indigo-500">
+                            <p class="text-sm font-medium text-slate-500">총 등록 자산 (Master)</p>
+                            <p id="kpi-total-assets" class="text-4xl font-extrabold text-slate-900 mt-2">0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow border-b-4 border-green-500">
+                            <p class="text-sm font-medium text-slate-500">현재 총 재고량 (Stock)</p>
+                            <p id="kpi-total-stock" class="text-4xl font-extrabold text-slate-900 mt-2">0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow border-b-4 border-red-500">
+                            <p class="text-sm font-medium text-slate-500">🚨 조치 필요 항목</p>
+                            <p id="kpi-action-required" class="text-4xl font-extrabold text-red-600 mt-2">0</p>
+                        </div>
+                    </div>
+
+                    <div id="alert-section" class="hidden mb-8">
+                        <h2 class="text-xl font-bold text-red-600 flex items-center mb-4">
+                            <span class="mr-2">🚨</span> 긴급 조치 필요 항목
+                        </h2>
+                        <div id="alert-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow">
+                            <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">📦 창고별 재고 현황</h3>
+                            <div id="stock-by-warehouse-container" class="space-y-4">
+                                </div>
+                        </div>
+
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow">
+                            <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">⚡ 최근 활동 (Top 5)</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-slate-200">
+                                    <thead class="bg-slate-50">
+                                        <tr><th class="p-3 text-left">처리</th><th class="p-3 text-left">코드</th><th class="p-3 text-left">시리얼</th><th class="p-3 text-right">수량</th><th class="p-3 text-left">시간</th></tr>
+                                    </thead>
+                                    <tbody id="dashboard-history-table" class="divide-y divide-slate-200">
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow mb-8">
+                        <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">📊 자재 유형별 마스터 현황</h3>
+                        <div id="type-breakdown-container" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
+                    </div>
+                </div>
+
+                <div id="view-assets" class="view-content animate-fade-in hidden">
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-6">자산 마스터 관리</h1>
+                    <div class="flex justify-between items-center p-4 bg-white rounded-xl shadow mb-8">
+                        <button id="open-asset-modal-new" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition">+ 새 자산 등록</button>
+                        <div class="flex space-x-3 opacity-50 cursor-not-allowed">
+                            <label class="px-6 py-3 bg-slate-200 text-slate-800 font-semibold rounded-lg">📤 엑셀 업로드</label>
+                            <button class="px-6 py-3 bg-slate-200 text-slate-800 font-semibold rounded-lg">⬇️ 엑셀 다운로드</button>
+                        </div>
+                    </div>
+                    <div id="asset-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                </div>
+
+                <div id="view-consumption" class="view-content animate-fade-in hidden">
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-6">일일 소모/반환 현황</h1>
+                    <div class="bg-white p-6 rounded-xl shadow mb-8">
+                        <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">재고 수기 처리</h3>
+                        <form id="consumption-form" class="space-y-4">
+                            <div class="grid grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">자산 코드 (product_code) *</label>
+                                    <select name="product_code" id="cons-pcode" required class="font-mono"><option value="">자산 선택...</option></select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">시리얼 (serial / 창고) *</label>
+                                    <select name="serial_number" id="cons-serial" required class="font-mono"><option value="">먼저 자산 코드를 선택하세요</option></select>
+                                </div>
+                                <input type="hidden" name="wh_code" id="cons-wh-code">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">수량 (qty) *</label>
+                                    <input type="number" name="qty" required min="1" value="1">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">처리 (tran_code) *</label>
+                                    <select name="tran_code">
+                                        <option value="CONSUME">소모 (출고)</option>
+                                        <option value="ROLLBACK">반환 (입고)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex justify-end pt-3">
+                                <button type="submit" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">처리 등록</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-xl font-semibold mb-5 text-slate-800 border-b pb-3">최근 처리 이력 (Top 20)</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50">
+                                    <tr><th class="p-3 text-left">처리</th><th class="p-3 text-left">코드</th><th class="p-3 text-left">시리얼</th><th class="p-3 text-right">수량</th><th class="p-3 text-left">시간</th></tr>
+                                </thead>
+                                <tbody id="recent-lot-history-table" class="divide-y divide-slate-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-lifecycle" class="view-content animate-fade-in hidden">
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-6">횟수 수명 관리</h1>
+                    <div class="bg-white p-6 rounded-xl shadow mb-8">
+                        <div class="flex justify-between items-center mb-5 border-b pb-3">
+                            <h3 class="text-xl font-semibold text-slate-800">사용 횟수(COUNT) 관리 대상</h3>
+                            <p class="text-sm text-slate-500">💡 '1회 사용' 버튼을 누르면 사용 횟수가 증가하고 수명 게이지가 찹니다.</p>
+                        </div>
+                        <div id="lifecycle-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    </div>
+                </div>
+
+                <div id="view-settings" class="view-content animate-fade-in hidden">
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-6">설정</h1>
+                    <div class="bg-white p-8 rounded-xl shadow max-w-xl">
+                        <label class="block text-sm font-medium text-slate-700">관리자 ID / 이름 (필수)</label>
+                        <input type="text" id="managerIdInput" placeholder="예: HONG-001" class="mt-1 block w-full border border-slate-300 rounded-lg p-3">
+                        <p class="text-sm text-slate-500 mt-2">* 모든 트랜잭션 기록에 이 ID가 사용됩니다.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div id="asset-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-40 hidden">
+            <div class="bg-white rounded-xl w-full max-w-4xl p-8 overflow-y-auto max-h-[90vh]">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-3">새 자산 등록</h3>
+                <form id="asset-form">
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div class="col-span-2 grid grid-cols-2 gap-6 p-4 bg-indigo-50 rounded-xl">
+                            <div><label class="block text-sm font-medium text-indigo-900">공장 (factory_id) *</label>
+                                <select name="factory_id" required class="border-indigo-300">
+                                    <option value="USB">USB (울산 전동화 공장)</option>
+                                    <option value="PST">PST (평택 시작실)</option>
+                                    <option value="HLB">HLB (화성 연구소)</option>
+                                </select>
+                            </div>
+                            <div><label class="block text-sm font-medium text-indigo-900">창고 (wh_code) *</label>
+                                <select name="wh_code" required class="border-indigo-300">
+                                    <option value="OW">OW (사무창고)</option>
+                                    <option value="FW">FW (공장창고)</option>
+                                    <option value="LW">LW (연구실창고)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-span-2"><label class="block text-sm font-medium text-slate-700">자산명 (product_name) *</label><input type="text" name="product_name" required placeholder="예: 전동 드라이버 A-Type"></div>
+                        <div><label class="block text-sm font-medium text-slate-700">자산 코드 (product_code) *</label><input type="text" name="product_code" required placeholder="예: TOL-DRV-001"></div>
+                        <div><label class="block text-sm font-medium text-slate-700">구매일 *</label><input type="date" name="purchase_date" required></div>
+                        
+                        <div><label class="block text-sm font-medium text-slate-700">자산 대분류 (cmf_1) *</label>
+                            <select name="cmf_1" required>
+                                <option value="">선택...</option>
+                                <option value="M">M (모비스)</option>
+                                <option value="B">B (NBTS)</option>
+                                <option value="K">K (NVHK)</option>
+                                <option value="H">H (화성 연구소)</option>
+                                <option value="S">S (평택 시작실)</option>
+                            </select>
+                        </div>
+                        
+                        <div><label class="block text-sm font-medium text-slate-700">상세 유형 (product_type) *</label>
+                            <select name="product_type" required>
+                                <option value="">선택...</option>
+                                <option value="보전 자재">보전 자재 (EMM)</option>
+                                <option value="컴퓨터/노트북">컴퓨터/노트북 (COM)</option>
+                                <option value="서버">서버 (SVR)</option>
+                                <option value="도구">도구 (TOL)</option>
+                                <option value="소모성 자재">소모성 자재 (CSM)</option>
+                                <option value="기타">기타 (ETC)</option>
+                            </select>
+                        </div>
+
+                        <div><label class="block text-sm font-medium text-slate-700">사용 부서 (dept) *</label>
+                            <select name="dept" required>
+                                <option value="">선택...</option>
+                                <option value="ICT 기획팀">ICT 기획팀 (ICT)</option>
+                                <option value="회계팀">회계팀 (ACC)</option>
+                                <option value="재무팀">재무팀 (FIN)</option>
+                                <option value="인사노무팀">인사노무팀 (HR)</option>
+                                <option value="총무팀">총무팀 (GA)</option>
+                                <option value="안전환경실">안전환경실 (SAF)</option>
+                                <option value="ESG TFT">ESG TFT (ESG)</option>
+                                <option value="선행품질시험팀">선행품질시험팀 (AQT)</option>
+                                <option value="신차품질팀">신차품질팀 (NQ)</option>
+                                <option value="품질경영팀">품질경영팀 (QM)</option>
+                                <option value="전동화품질팀">전동화품질팀 (EQ)</option>
+                                <option value="구매팀">구매팀 (PUR)</option>
+                                <option value="개발팀">개발팀 (DEV)</option>
+                                <option value="생산기술팀">생산기술팀 (PT)</option>
+                                <option value="기술개발센터">기술개발센터 (TDC)</option>
+                                <option value="전동화설계팀">전동화설계팀 (ED)</option>
+                                <option value="영업구매1팀">영업구매1팀 (BP1)</option>
+                                <option value="영업구매2팀">영업구매2팀 (BP2)</option>
+                                <option value="생산관리팀">생산관리팀 (PM)</option>
+                                <option value="생산팀">생산팀 (PRO)</option>
+                                <option value="공정기술팀">공정기술팀 (OT)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-span-2 grid grid-cols-2 gap-6 p-4 bg-slate-100 rounded-xl border border-slate-200">
+                            <h4 class="col-span-2 text-sm font-bold text-slate-700 mb-[-10px]">제품 수명 주기 관리 (Product Life Cycle)</h4>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700">관리 유형 (cmf_3)</label>
+                                <select name="cmf_3" id="lifecycle-type">
+                                    <option value="NONE" selected>사용 안함 (일반 자재)</option>
+                                    <option value="PERIOD">주기 관리 (개월 단위)</option>
+                                    <option value="COUNT">횟수 관리 (사용 횟수)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700">설정 값 (cmf_4)</label>
+                                <input type="number" name="cmf_4" id="lifecycle-value" min="1" placeholder="유형 선택 후 입력" disabled class="bg-gray-200 cursor-not-allowed">
+                            </div>
+                        </div>
+
+                        <div><label class="block text-sm font-medium text-slate-700 bg-gray-50 p-1 rounded">내부 관리 코드 (자동생성)</label><input type="text" name="cmf_2" readonly class="bg-gray-100 text-slate-500 cursor-not-allowed" placeholder="저장 시 자동 생성됨"></div>
+
+                        <div><label class="block text-sm font-medium text-slate-700">시리얼 번호 (선택)</label><input type="text" name="serial_number" placeholder="없을 경우 비워두세요"></div>
+                        <div><label class="block text-sm font-medium text-slate-700">실사용자 (선택)</label><input type="text" name="user" placeholder="예: 홍길동"></div>
+                        
+                        <div><label class="block text-sm font-medium text-slate-700">초기 수량 (qty) *</label><input type="number" name="qty" min="0" value="1" required></div>
+                        <div><label class="block text-sm font-medium text-slate-700">안전 재고 (safe_qty)</label><input type="number" name="safe_qty" min="0" value="0"></div>
+                        
+                        <div><label class="block text-sm font-medium text-slate-700">단위 (unit) *</label>
+                            <select name="unit" required>
+                                <option value="EA" selected>EA (개)</option>
+                                <option value="BOX">BOX (박스)</option>
+                                <option value="SET">SET (세트)</option>
+                                <option value="Kg">Kg (킬로그램)</option>
+                                <option value="L">L (리터)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 border-t pt-4">
+                        <button type="button" id="close-asset-modal" class="px-5 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">취소</button>
+                        <button type="submit" class="px-5 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">저장 하기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Supabase 설정
+        const SUPABASE_URL = 'https://xtcoovvghttnwxwdttqa.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0Y29vdnZnaHR0bnd4d2R0dHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMDE3NzYsImV4cCI6MjA3Njg3Nzc3Nn0.Fmn9b1FoyklF5jw0oiLKp4JT1zRTY9iq9hiCog6HHpE';
+        const createClient = window.supabaseCreateClient;
+        let supabase;
+
+        // 전역 상태 관리
+        const state = { 
+            assets: [],      // MA_PRODUCT 마스터 데이터
+            history: [],     // 최근 20건 트랜잭션 이력
+            stock: [],       // WH_STS 현재 재고 데이터
+            usageCounts: {}, // 'COUNT' 타입 자산의 총 사용 횟수 캐시 { "code|serial": count }
+            managerId: localStorage.getItem('mgrId') || '' 
+        };
+        
+        // 매핑 상수
+        const TYPE_MAP = { "보전 자재": "EMM", "컴퓨터/노트북": "COM", "서버": "SVR", "도구": "TOL", "소모성 자재": "CSM", "기타": "ETC" };
+        const DEPT_MAP = { "ICT 기획팀": "ICT", "회계팀": "ACC", "재무팀": "FIN", "인사노무팀": "HR", "총무팀": "GA", "안전환경실": "SAF", "ESG TFT": "ESG", "선행품질시험팀": "AQT", "신차품질팀": "NQ", "품질경영팀": "QM", "전동화품질팀": "EQ", "구매팀": "PUR", "개발팀": "DEV", "생산기술팀": "PT", "기술개발센터": "TDC", "전동화설계팀": "ED", "영업구매1팀": "BP1", "영업구매2팀": "BP2", "생산관리팀": "PM", "생산팀": "PRO", "공정기술팀": "OT" };
+        const MONTH_MAP = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+
+        // 유틸리티 함수
+        const $ = s => document.querySelector(s);
+        const showLoading = (show, msg='처리 중...') => { $('#loading-text').innerText=msg; $('#loading-overlay').classList.toggle('hidden', !show); };
+        const alertMsg = (msg, err=false) => { alert(msg); if(err) console.error(msg); };
+
+        // 초기화
+        async function init() {
+            showLoading(true, '시스템 초기화 중...');
+            try {
+                supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+                if(state.managerId) $('#managerIdInput').value = state.managerId;
+                
+                await loadData(); // 초기 데이터 로드
+                subscribe();      // 실시간 구독 시작
+                bindEvents();     // 이벤트 바인딩
+
+                $('#connection-status').innerText = '🟢 Connected (Realtime)';
+            } catch(e) {
+                $('#connection-status').innerText = '🔴 Connection Failed'; 
+                alertMsg('초기화 실패: '+e.message, true);
+            } finally { showLoading(false); }
+        }
+
+        function bindEvents() {
+            // 네비게이션 클릭 이벤트
+            ['dashboard','assets','consumption','lifecycle','settings'].forEach(v => $('#nav-'+v).onclick = () => changeView('view-'+v));
+            
+            // 설정 및 모달 이벤트
+            $('#managerIdInput').oninput = e => { state.managerId=e.target.value; localStorage.setItem('mgrId', e.target.value); };
+            $('#open-asset-modal-new').onclick = () => $('#asset-modal').classList.remove('hidden');
+            $('#close-asset-modal').onclick = () => { $('#asset-modal').classList.add('hidden'); $('#asset-form').reset(); resetLifecycleInputs(); };
+            
+            // 폼 제출 이벤트
+            $('#asset-form').onsubmit = saveAsset;
+            $('#consumption-form').onsubmit = saveConsumption;
+            
+            // 소모품 처리 드롭다운 변경 이벤트
+            $('#cons-pcode').onchange = handleProductChange;
+            $('#cons-serial').onchange = handleSerialChange;
+            
+            // 수명 주기 타입 변경 시 입력 필드 활성/비활성 처리
+            $('#lifecycle-type').onchange = (e) => {
+                const valInput = $('#lifecycle-value');
+                if (e.target.value === 'NONE') { 
+                    valInput.disabled = true; valInput.value = ''; 
+                    valInput.classList.add('bg-gray-200', 'cursor-not-allowed');
+                    valInput.classList.remove('bg-white');
+                } else { 
+                    valInput.disabled = false; 
+                    valInput.classList.remove('bg-gray-200', 'cursor-not-allowed');
+                    valInput.classList.add('bg-white');
+                    valInput.focus(); 
+                }
+            };
+            
+            // [Lifecycle] '1회 사용' 버튼 이벤트 위임
+            $('#lifecycle-list').addEventListener('click', async (e) => {
+                if (e.target.classList.contains('use-btn')) {
+                    await handleUseAsset(e.target.getAttribute('data-pcode'), e.target.getAttribute('data-sn'));
+                }
+            });
+        }
+
+        function resetLifecycleInputs() {
+             const valInput = $('#lifecycle-value');
+             valInput.disabled = true; valInput.value = '';
+             valInput.classList.add('bg-gray-200', 'cursor-not-allowed');
+        }
+
+        function changeView(id) {
+            document.querySelectorAll('.view-content').forEach(el => el.classList.add('hidden'));
+            $('#'+id).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('bg-indigo-600'));
+            $('#nav-'+id.replace('view-','')).classList.add('bg-indigo-600');
+            
+            // 뷰 진입 시 특정 동작 수행
+            if(id === 'view-dashboard') render(); // 대시보드 갱신
+            if(id === 'view-consumption') updateConsumptionDropdowns();
+            if(id === 'view-lifecycle') renderLifecycle();
+        }
+
+        async function loadData() {
+            // Promise.all로 병렬 데이터 로드
+            const [rMaster, rHistoryTop, rStock, rUseHistory] = await Promise.all([
+                supabase.from('MA_PRODUCT').select('*').order('created_at', { ascending: false }),
+                supabase.from('LOT_HIS').select('*').order('created_at', { ascending: false }).limit(20),
+                supabase.from('WH_STS').select('*'),
+                supabase.from('LOT_HIS').select('product_code, serial_number, qty').eq('tran_code', 'USE')
+            ]);
+
+            if(rMaster.error) throw rMaster.error;
+            state.assets = rMaster.data;
+            state.history = rHistoryTop.data || [];
+            state.stock = rStock.data || [];
+
+            // 사용 횟수 전역 집계 (캐싱)
+            state.usageCounts = {};
+            if (rUseHistory.data) {
+                rUseHistory.data.forEach(h => {
+                    const key = `${h.product_code}|${h.serial_number||'null'}`;
+                    state.usageCounts[key] = (state.usageCounts[key] || 0) + (h.qty || 0);
+                });
+            }
+
+            render(); // 데이터 로드 후 화면 갱신
+        }
+
+        function subscribe() {
+            // DB 변경 사항 실시간 감지
+            supabase.channel('public:all').on('postgres_changes', { event: '*', schema: 'public' }, () => loadData()).subscribe();
+        }
+
+        // =========================================
+        // [핵심] 렌더링 관련 함수들 (대시보드 개선)
+        // =========================================
+        function render() {
+            $('#kpi-total-assets').innerText = state.assets.length.toLocaleString();
+            $('#kpi-total-stock').innerText = state.stock.reduce((sum, i) => sum + i.qty, 0).toLocaleString();
+            
+            renderSafetyAlerts();       // [MODIFIED] 안전재고 현황 + KPI 업데이트
+            renderAssets();             // 자산 마스터 리스트
+            renderHistory();            // (소모/반환 탭) 최근 이력 테이블
+            renderTypeBreakdown();      // (대시보드) 유형별 통계
+            renderStockByWarehouse();   // [NEW] (대시보드) 창고별 재고
+            renderDashboardHistory();   // [NEW] (대시보드) 최근 활동 요약
+        }
+
+        // [MODIFIED] 안전재고 및 리스크 분석 + KPI 업데이트
+        function renderSafetyAlerts() {
+            const alerts = [];
+            const today = new Date();
+
+            state.stock.forEach(item => {
+                const assetName = state.assets.find(a => a.product_code === item.product_code)?.product_name || item.product_code;
+                const identifier = `${assetName} (${item.product_code})${item.serial_number ? ' [SN:'+item.serial_number+']' : ''}`;
+
+                // 1. 일반 안전재고 부족 (NONE or null)
+                if (!item.cmf_3 || item.cmf_3 === 'NONE') {
+                    if (item.safe_qty > 0 && item.qty <= item.safe_qty) {
+                        alerts.push({
+                            type: '📦 재고 부족',
+                            level: 'danger', 
+                            msg: `<span class="font-bold">${identifier}</span>의 재고가 부족합니다. (현재: ${item.qty} / 안전: ${item.safe_qty})`
+                        });
+                    }
+                }
+                // 2. 주기(PERIOD) 도래
+                else if (item.cmf_3 === 'PERIOD') {
+                    const created = new Date(item.created_at);
+                    const monthsPassed = (today.getFullYear() - created.getFullYear()) * 12 + (today.getMonth() - created.getMonth());
+                    const limit = parseInt(item.cmf_4 || '0');
+                    if (limit > 0 && monthsPassed >= limit) {
+                        alerts.push({
+                            type: '📅 교체 주기 도래',
+                            level: 'warning', 
+                            msg: `<span class="font-bold">${identifier}</span>의 교체 주기가 되었습니다. (경과: ${monthsPassed}개월 / 주기: ${limit}개월)`
+                        });
+                    }
+                }
+                // 3. 사용 횟수(COUNT) 초과
+                else if (item.cmf_3 === 'COUNT') {
+                    const key = `${item.product_code}|${item.serial_number||'null'}`;
+                    const used = state.usageCounts[key] || 0;
+                    const limit = parseInt(item.cmf_4 || '0');
+                    if (limit > 0 && used >= limit) {
+                        alerts.push({
+                            type: '🔢 사용 한계 도달',
+                            level: 'warning', 
+                            msg: `<span class="font-bold">${identifier}</span>의 사용 횟수가 한계에 도달했습니다. (사용: ${used}회 / 한계: ${limit}회)`
+                        });
+                    }
+                }
+            });
+
+            // [NEW] 조치 필요 KPI 업데이트
+            $('#kpi-action-required').innerText = alerts.length.toLocaleString();
+
+            // 알림 섹션 표시 여부 결정
+            const alertSection = $('#alert-section');
+            const alertList = $('#alert-list');
+            
+            if (alerts.length === 0) {
+                alertSection.classList.add('hidden');
+            } else {
+                alertSection.classList.remove('hidden');
+                alertList.innerHTML = alerts.map(a => `
+                    <div class="flex items-start p-4 rounded-lg border-l-4 ${a.level === 'danger' ? 'bg-red-50 border-red-500 text-red-700' : 'bg-yellow-50 border-yellow-400 text-yellow-800'} shadow-sm">
+                        <div class="flex-shrink-0 font-bold mr-3">${a.type}</div>
+                        <div class="text-sm">${a.msg}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // [NEW] 대시보드 - 창고별 재고 현황 렌더링
+        function renderStockByWarehouse() {
+            const container = $('#stock-by-warehouse-container');
+            const whStock = state.stock.reduce((acc, item) => {
+                const wh = item.wh_code || '미지정';
+                acc[wh] = (acc[wh] || 0) + item.qty;
+                return acc;
+            }, {});
+
+            if (Object.keys(whStock).length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-500">재고 정보가 없습니다.</p>';
+                return;
+            }
+
+            container.innerHTML = Object.entries(whStock)
+                .sort((a, b) => b[1] - a[1]) // 수량 많은 순 정렬
+                .map(([wh, qty]) => `
+                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <span class="font-semibold text-slate-700">${wh} 창고</span>
+                    <span class="font-bold text-indigo-600 text-lg">${qty.toLocaleString()} <span class="text-sm text-slate-400">ea</span></span>
+                </div>
+            `).join('');
+        }
+
+        // [NEW] 대시보드 - 최근 활동 (Top 5) 렌더링
+        function renderDashboardHistory() {
+            const tableBody = $('#dashboard-history-table');
+            const history = state.history.slice(0, 5); // Top 5
+            
+            if (history.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">최근 활동이 없습니다.</td></tr>'; 
+                return; 
+            }
+            
+            tableBody.innerHTML = history.map(h => {
+                let { typeClass, typeName } = getHistoryType(h.tran_code);
+                return `
+                <tr class="hover:bg-slate-50 text-sm transition">
+                    <td class="p-3 font-bold ${typeClass}">${typeName}</td>
+                    <td class="p-3 font-mono">${h.product_code}</td>
+                    <td class="p-3 text-slate-500 font-mono">${h.serial_number||'-'}</td>
+                    <td class="p-3 font-bold text-right">${h.qty}</td>
+                    <td class="p-3 text-slate-400 text-xs">${new Date(h.created_at).toLocaleString().slice(2)}</td>
+                </tr>`;
+            }).join('');
+        }
+        
+        // [분리] 이력 테이블 렌더링 (소모/반환 탭)
+        function renderHistory() {
+            const tableBody = $('#recent-lot-history-table');
+            if (state.history.length === 0) { 
+                tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">이력이 없습니다.</td></tr>'; 
+                return; 
+            }
+            
+            tableBody.innerHTML = state.history.map(h => {
+                let { typeClass, typeName } = getHistoryType(h.tran_code);
+                return `
+                <tr class="hover:bg-slate-50 text-sm transition">
+                    <td class="p-3 font-bold ${typeClass}">${typeName}</td>
+                    <td class="p-3 font-mono">${h.product_code}</td>
+                    <td class="p-3 text-slate-500 font-mono">${h.serial_number||'-'}</td>
+                    <td class="p-3 font-bold text-right">${h.qty}</td>
+                    <td class="p-3 text-slate-400 text-xs">${new Date(h.created_at).toLocaleString().slice(2)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // [NEW] 트랜잭션 코드 -> 이름/클래스 변환 유틸
+        function getHistoryType(tranCode) {
+            let typeClass = 'text-slate-600', typeName = tranCode;
+            switch(tranCode) {
+                case 'IN': typeName='입고'; typeClass='text-blue-600'; break;
+                case 'CONSUME': typeName='소모'; typeClass='text-red-600'; break;
+                case 'ROLLBACK': typeName='반환'; typeClass='text-green-600'; break;
+                case 'USE': typeName='사용'; typeClass='text-purple-600'; break;
+            }
+            return { typeClass, typeName };
+        }
+
+        // =========================================
+        // 
+        //  (수정 없음) 기존 함수들
+        // 
+        // =========================================
+
+        function renderLifecycle() {
+            const list = $('#lifecycle-list');
+            const countItems = state.stock.filter(s => s.cmf_3 === 'COUNT');
+            
+            if (countItems.length === 0) {
+                list.innerHTML = '<div class="col-span-full p-10 text-center text-slate-500 bg-slate-50 rounded-xl border border-dashed">횟수(COUNT)로 관리되는 자산이 없습니다.</div>';
+                return;
+            }
+
+            list.innerHTML = countItems.map(item => {
+                const asset = state.assets.find(a => a.product_code === item.product_code);
+                const assetName = asset ? asset.product_name : item.product_code;
+                const maxLife = parseInt(item.cmf_4 || '0');
+                const currentUse = state.usageCounts[`${item.product_code}|${item.serial_number||'null'}`] || 0;
+                const percent = maxLife > 0 ? Math.min((currentUse / maxLife) * 100, 100) : 0;
+                
+                let progressClass = '';
+                if (percent >= 100) progressClass = 'danger';       // 100% 이상 빨강
+                else if (percent >= 80) progressClass = 'warning';  // 80% 이상 노랑
+
+                return `
+                <div class="bg-white p-6 rounded-xl shadow border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-slate-800 truncate" title="${assetName}">${assetName}</h4>
+                            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 whitespace-nowrap">횟수 관리</span>
+                        </div>
+                        <div class="text-sm text-slate-600 space-y-1 mb-4">
+                             <p>코드: <span class="font-mono font-semibold">${item.product_code}</span></p>
+                             <p>S/N: <span class="font-mono">${item.serial_number || '(No Serial)'}</span></p>
+                        </div>
+                        <div class="mb-4">
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span>현재 사용: ${currentUse}회</span>
+                                <span class="text-slate-400">최대 수명: ${maxLife}회</span>
+                            </div>
+                            <progress class="${progressClass} h-3" value="${percent}" max="100"></progress>
+                        </div>
+                    </div>
+                    <button class="use-btn w-full py-3 bg-indigo-50 text-indigo-700 font-bold rounded-lg hover:bg-indigo-100 transition flex justify-center items-center" 
+                            data-pcode="${item.product_code}" data-sn="${item.serial_number||''}">
+                        ⚡ 1회 사용 처리
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        async function handleUseAsset(pCode, sn) {
+            if(!checkMgr()) return;
+            const serialVal = sn === '' ? null : sn; 
+            if(!confirm(`[ ${pCode} ] 자산을 1회 사용 처리하시겠습니까?`)) return;
+
+            showLoading(true, '사용 처리 중...');
+            try {
+                const { error } = await supabase.from('LOT_HIS').insert({
+                    tran_code: 'USE',
+                    product_code: pCode,
+                    serial_number: serialVal,
+                    qty: 1,
+                    create_user_id: state.managerId
+                });
+                if(error) throw error;
+                // loadData가 자동으로 호출되어(subscribe 덕분) 화면이 갱신됩니다.
+                alertMsg('사용 처리가 완료되었습니다.');
+            } catch(e) {
+                alertMsg('처리 실패: ' + e.message, true);
+            } finally { showLoading(false); }
+        }
+
+        function updateConsumptionDropdowns() {
+            const pSelect = $('#cons-pcode');
+            const currentVal = pSelect.value;
+            const uniqueCodes = [...new Set(state.stock.map(s => s.product_code))].sort();
+            
+            pSelect.innerHTML = '<option value="">자산 선택...</option>' + uniqueCodes.map(c => {
+                const a = state.assets.find(ax => ax.product_code === c);
+                return `<option value="${c}">${a ? a.product_name : c} (${c})</option>`;
+            }).join('');
+            
+            if(currentVal && uniqueCodes.includes(currentVal)) pSelect.value = currentVal;
+            handleProductChange();
+        }
+
+        function handleProductChange() {
+            const pCode = $('#cons-pcode').value;
+            const sSelect = $('#cons-serial');
+            $('#cons-wh-code').value = '';
+            sSelect.innerHTML = '<option value="">선택하세요</option>';
+            
+            if(!pCode) return;
+            
+            state.stock.filter(s => s.product_code === pCode).forEach(i => {
+                const serialText = i.serial_number ? `S/N: ${i.serial_number}` : '(No Serial)';
+                sSelect.innerHTML += `<option value="${i.serial_number||''}" data-wh="${i.wh_code}">${serialText} | 창고: ${i.wh_code} | 재고: ${i.qty}ea</option>`;
+            });
+        }
+
+        function handleSerialChange(e) {
+            $('#cons-wh-code').value = e.target.selectedOptions[0]?.getAttribute('data-wh') || '';
+        }
+
+        function renderAssets() {
+            const list = $('#asset-list');
+            if(!state.assets.length) { list.innerHTML='<div class="col-span-full p-10 text-center bg-white rounded-xl text-slate-500 border border-dashed">등록된 자산 마스터가 없습니다.</div>'; return; }
+            list.innerHTML = state.assets.map(a => `
+                <div class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition border border-slate-200">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-bold text-slate-800 truncate pr-2" title="${a.product_name}">${a.product_name}</h3>
+                        <span class="px-2 py-1 text-xs font-medium rounded bg-slate-100 text-slate-600 whitespace-nowrap">${a.product_type}</span>
+                    </div>
+                    <div class="text-sm text-slate-600 space-y-1">
+                        <p>코드: <span class="font-mono font-semibold">${a.product_code}</span></p>
+                        <p class="text-xs text-slate-400">관리번호: ${a.cmf_2||'-'}</p>
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t">
+                            <span class="text-xs text-slate-500">
+                                ${a.cmf_3==='PERIOD' ? '📅 주기: '+a.cmf_4+'개월' : (a.cmf_3==='COUNT' ? '🔢 수명: '+a.cmf_4+'회' : '📦 일반 관리')}
+                            </span>
+                            <span class="font-bold text-indigo-600">${a.qty} ${a.unit}</span>
+                        </div>
+                    </div>
+                </div>`).join('');
+        }
+
+        function renderTypeBreakdown() {
+            const counts = state.assets.reduce((acc, cur) => { acc[cur.product_type] = (acc[cur.product_type]||0)+1; return acc; }, {});
+            $('#type-breakdown-container').innerHTML = Object.entries(counts).map(([type, count]) => `
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-center">
+                    <h4 class="text-xs font-bold text-indigo-400 mb-1 truncate uppercase">${type}</h4>
+                    <span class="text-2xl font-extrabold text-indigo-900">${count}</span>
+                </div>`).join('');
+        }
+
+        async function saveAsset(e) {
+            e.preventDefault(); if(!checkMgr()) return;
+            const fd = new FormData(e.target);
+            
+            const pDate = new Date(fd.get('purchase_date'));
+            const typeCode = TYPE_MAP[fd.get('product_type')] || 'ETC';
+            const deptCode = DEPT_MAP[fd.get('dept')] || 'ETC';
+            const dateCode = pDate.getFullYear().toString().slice(-2) + MONTH_MAP[pDate.getMonth()];
+            const prefix = `${fd.get('cmf_1')}-${typeCode}-${deptCode}-${dateCode}`;
+            
+            showLoading(true, '자산 등록 중...');
+            try {
+                const { data: existing } = await supabase.from('MA_PRODUCT').select('cmf_2').ilike('cmf_2', `${prefix}-%`);
+                let maxSeq = 0;
+                (existing||[]).forEach(r => { try { maxSeq = Math.max(maxSeq, parseInt(r.cmf_2.split('-').pop())); } catch {} });
+                const cmf_2 = `${prefix}-${String(maxSeq+1).padStart(4,'0')}`;
+                
+                const lifeType = fd.get('cmf_3');
+                const lifeVal = (lifeType === 'NONE') ? null : fd.get('cmf_4');
+
+                const { error: e1 } = await supabase.from('MA_PRODUCT').insert({
+                    product_name: fd.get('product_name'), product_code: fd.get('product_code'),
+                    product_type: fd.get('product_type'), cmf_1: fd.get('cmf_1'), cmf_2: cmf_2,
+                    purchase_date: fd.get('purchase_date'), qty: parseInt(fd.get('qty')||0),
+                    safe_qty: parseInt(fd.get('safe_qty')||0), unit: fd.get('unit'), create_user: state.managerId,
+                    cmf_3: lifeType, cmf_4: lifeVal
+                });
+                if(e1) throw e1;
+
+                const { error: e2 } = await supabase.from('WH_STS').insert({
+                    factory_id: fd.get('factory_id'), wh_code: fd.get('wh_code'),
+                    product_code: fd.get('product_code'), qty: parseInt(fd.get('qty')||0),
+                    safe_qty: parseInt(fd.get('safe_qty')||0), serial_number: fd.get('serial_number') || null,
+                    dept: fd.get('dept'), user: fd.get('user'), cmf_1: fd.get('cmf_1'), cmf_2: cmf_2,
+                    cmf_3: lifeType, cmf_4: lifeVal
+                });
+                if(e2) throw new Error('재고 생성 실패: '+e2.message);
+
+                await supabase.from('LOT_HIS').insert({ 
+                    tran_code: 'IN', product_code: fd.get('product_code'), 
+                    serial_number: fd.get('serial_number') || null, qty: parseInt(fd.get('qty')||0), 
+                    create_user_id: state.managerId 
+                });
+                
+                alertMsg('자산 등록이 완료되었습니다.'); 
+                $('#asset-modal').classList.add('hidden'); e.target.reset(); resetLifecycleInputs();
+            } catch(e) { alertMsg('저장 실패: '+e.message, true); } finally { showLoading(false); }
+        }
+
+        async function saveConsumption(e) {
+            e.preventDefault(); if(!checkMgr()) return;
+            const fd = new FormData(e.target);
+            const item = { pCode: fd.get('product_code'), sn: fd.get('serial_number') || null, wh: fd.get('wh_code'), qty: parseInt(fd.get('qty')), tran: fd.get('tran_code') };
+            
+            if(!item.pCode || !item.wh) { alertMsg('필수 정보가 누락되었습니다.'); return; }
+
+            showLoading(true, '재고 처리 중...');
+            try {
+                let q = supabase.from('WH_STS').select('*').eq('product_code', item.pCode).eq('wh_code', item.wh);
+                if(item.sn) q = q.eq('serial_number', item.sn); else q = q.is('serial_number', null);
+                
+                const { data: stock, error: err1 } = await q.single();
+                if(err1 || !stock) throw new Error('해당 조건의 재고가 존재하지 않습니다.');
+                
+                const newQty = item.tran === 'CONSUME' ? stock.qty - item.qty : stock.qty + item.qty;
+                if(newQty < 0) throw new Error(`재고가 부족합니다. (현재고: ${stock.qty})`);
+
+                let uq = supabase.from('WH_STS').update({ qty: newQty }).eq('product_code', item.pCode).eq('wh_code', item.wh);
+                if(item.sn) uq = uq.eq('serial_number', item.sn); else uq = uq.is('serial_number', null);
+                const { error: e2 } = await uq; if(e2) throw e2;
+                
+                await supabase.from('LOT_HIS').insert({ 
+                    tran_code: item.tran, product_code: item.pCode, serial_number: item.sn, 
+                    qty: item.qty, create_user_id: state.managerId 
+                });
+                
+                alertMsg('처리가 완료되었습니다.'); 
+                e.target.reset(); $('#cons-serial').innerHTML = '<option value="">먼저 자산 코드를 선택하세요</option>';
+            } catch(e) { alertMsg('처리 실패: '+e.message, true); } finally { showLoading(false); }
+        }
+
+        function checkMgr() { 
+            if(!state.managerId) { 
+                alertMsg('설정 탭에서 관리자 ID를 먼저 입력해주세요.'); 
+                changeView('view-settings'); $('#managerIdInput').focus(); return false; 
+            } return true; 
+        }
+
+        init();
+    </script>
+</body>
+</html>
