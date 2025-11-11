@@ -746,6 +746,7 @@
         }
 
         /** [MODIFIED] QR 스캐너 시작 함수 (window. 전역 객체 명시) */
+        /** [MODIFIED] QR 스캐너 시작 함수 (스캔 영역 60%로 축소) */
         function startQrScanner() {
             if (!scannerTargetInput) {
                 alertMsg('스캔할 필드를 먼저 선택해주세요 (버튼 클릭 오류).', true);
@@ -754,18 +755,16 @@
             
             $('#scanner-modal').classList.remove('hidden');
 
-            // 스캐너 객체가 없거나 중지된 경우에만 새로 생성
             if (!html5QrCodeScanner || html5QrCodeScanner.getState() === 1) { // 1 = NOT_STARTED
                 
-                // 스캐너 설정 객체
                 const scannerConfig = {
                     fps: 10, 
+                    // [핵심 수정] 스캔 영역을 70% -> 60%로 축소하여 초점 유도
                     qrbox: (viewfinderWidth, viewfinderHeight) => {
-                        const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.7;
+                        const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.6; // 0.7 -> 0.6
                         return { width: size, height: size };
                     },
                     
-                    // [핵심 수정] 'window.'를 붙여 전역 객체임을 명시
                     formatsToSupport: [
                         window.Html5QrcodeSupportedFormats.QR_CODE,
                         window.Html5QrcodeSupportedFormats.CODE_128,
@@ -781,14 +780,13 @@
 
                 html5QrCodeScanner = new Html5QrcodeScanner(
                     "qr-reader", 
-                    scannerConfig, // 설정 객체 전달
+                    scannerConfig, 
                     /* verbose= */ false
                 );
             }
             
-            // 스캐너 렌더링 (카메라 시작)
             html5QrCodeScanner.render(onScanSuccess, (error) => {
-                // 스캔 중 발생하는 오류는 무시
+                // 오류 무시
             });
         }
 
